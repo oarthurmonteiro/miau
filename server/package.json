@@ -1,0 +1,22 @@
+{
+  "name": "miau",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot run src/infra/server.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.2",
+    "@types/bun": "latest",
+    "prisma": "^6.3.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0",
+    "hono": "^4.6.2"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.4.2",
+    "@prisma/client": "^6.3.1",
+    "zod": "^3.24.1"
+  }
+}
