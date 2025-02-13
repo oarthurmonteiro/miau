@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CreateUserInput = z.object({
+export const RegisterUserInput = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(12),
   firstName: z.string().min(2).max(16),
