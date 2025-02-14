@@ -13,6 +13,8 @@ src/
 │   └── ...
 ├── routes/
 │   └── ...
+├── shared/
+│   └── ...
 └── server.ts
 ```
 
@@ -63,6 +65,16 @@ Each route receives the request, calls the application service, and returns a re
 - Does not contain business rules (only calls application services).
 - Converts HTTP requests to application commands.
 - Returns the formatted response (JSON, HTTP error, etc).
+
+## 📂 `shared/` (Shared Layer / API)
+
+Here, resources, utilities and definitions that are common and reusable in several domains or modules of the application will be centralized. This avoids code duplication, facilitates maintenance and promotes consistency throughout the project base.
+
+💡 Role of the shared layer:
+
+- Centralize common elements like utilities and definitions.
+- Make all modules adhere to consistent implementations and conventions.
+- Isolate cross-cutting concerns by separating them from core business and technical logic.
 
 ## 📜 `server.ts`
 
