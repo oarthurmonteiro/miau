@@ -27,7 +27,10 @@
     // Import paths
     "baseUrl": "./src",
     "paths": {
-      "@domains/*": ["domains/*"]
+      "@domain/*": ["domain/*"],
+      "@shared/*": ["shared/*"],
+      "@infraestructure/*": ["infraestructure/*"],
+      "@application/*": ["application/*"]
     },
   }
 }

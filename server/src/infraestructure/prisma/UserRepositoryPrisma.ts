@@ -1,10 +1,16 @@
 // infrastructure/prisma/UserRepositoryPrisma.ts
 import { prisma } from "./client";
-import { User } from "../../domain/user/User";
-import type { UserRepository } from "../../domain/user/UserRepository";
-import { password } from "bun";
+import { User } from "@domain/users/User";
+import type { UserRepository } from "@domain/users/UserRepository";
 
 export class UserRepositoryPrisma implements UserRepository {
+  async findById(id: number): Promise<User | null> {
+    const userData = await prisma.user.findUnique({ where: { id: id } });
+    if (!userData) return null;
+
+    return new User(userData);
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     const userData = await prisma.user.findUnique({ where: { email } });
     if (!userData) return null;
@@ -16,9 +22,18 @@ export class UserRepositoryPrisma implements UserRepository {
     const saved = await prisma.user.create({
       data: {
         ...user.data,
-        password: user.password, // acesso privado
+        password: await user.encryptPassword(),
       },
     });
+    return new User(saved);
+  }
+
+  async update(user: User): Promise<User> {
+    const saved = await prisma.user.update({
+      where: { id: user.data.id },
+      data: user.data,
+    });
+
     return new User(saved);
   }
 }
