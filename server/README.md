@@ -17,3 +17,7 @@ This project was created using `bun init` in bun v1.2.2. [Bun](https://bun.sh) i
 ## Folder Structure
 
 To understand the decisions on the folder structure, access [here](./docs/folder-structure.md)
+
+## Tables
+
+To see tables and relations, access [here](./docs/database-structure.md)

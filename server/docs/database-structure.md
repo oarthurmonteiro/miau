@@ -2,8 +2,6 @@
 
 # [Tables](https://dbdiagram.io/d/MiAu-67994e69263d6cf9a056aa8e)
 
-![MiAu Database.svg](MiAu%20Database.svg)
-
 ## Users
 
 Stores the app users
