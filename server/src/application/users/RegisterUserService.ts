@@ -1,8 +1,7 @@
 import type { z } from "zod";
 import type { registerUserSchema } from "./dtos";
 import { NonUniqueEmail } from "shared/errors";
-import type { UserRepository } from "@domain/users/UserRepository";
-import { UserRepositoryPrisma } from "@infraestructure/prisma/UserRepositoryPrisma";
+import { UserRepository } from "@infraestructure/database/UserRepository";
 import {
   User,
   userOutputSchema,
@@ -10,11 +9,11 @@ import {
 } from "@domain/users/User";
 import { UserValidators } from "@domain/users/UserValidators";
 
-const userRepository: UserRepository = new UserRepositoryPrisma();
-
 export async function registerUser(
   payload: z.infer<typeof registerUserSchema>,
 ): Promise<UserOutputData> {
+  const userRepository = new UserRepository();
+
   const validators = new UserValidators(userRepository);
 
   if (!(await validators.emailIsUnique(payload.email))) {
@@ -22,6 +21,6 @@ export async function registerUser(
   }
 
   const user = new User(payload);
-
-  return userOutputSchema.parse((await userRepository.create(user)).data);
+  const createdUser = await userRepository.create(user);
+  return userOutputSchema.parse(createdUser.data);
 }

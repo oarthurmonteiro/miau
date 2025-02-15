@@ -61,7 +61,7 @@ export class User {
     return this.password;
   }
 
-  public checkPasswordIdentity(pwd: string): boolean {
-    return pwd === this.password;
+  public async checkPasswordIdentity(pwd: string): Promise<boolean> {
+    return (await this.encryptPassword(pwd)) === this.password;
   }
 }

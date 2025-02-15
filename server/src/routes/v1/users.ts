@@ -6,26 +6,31 @@ import { registerUser } from "@application/users/RegisterUserService";
 import { getUserData } from "@application/users/GetUserDataService";
 import { updateUserData } from "@application/users/UpdateUserDataService";
 import { Id } from "@shared/types";
+import { HttpStatusCode } from "@shared/enums";
 
-const app = new Hono();
+export const usersRouter = new Hono();
 
-app.get("/:id", zValidator("param", z.object({ id: Id })), async (c) => {
-  const { id } = c.req.valid("param");
+usersRouter.get(
+  "/:id",
+  zValidator("param", z.object({ id: Id })),
+  async (c) => {
+    const { id } = c.req.valid("param");
 
-  const user = await getUserData(id);
+    const user = await getUserData(id);
 
-  return c.json(user);
-});
+    return c.json(user);
+  },
+);
 
-app.post("/", zValidator("json", registerUserSchema), async (c) => {
+usersRouter.post("/", zValidator("json", registerUserSchema), async (c) => {
   const payload = c.req.valid("json");
 
   const user = await registerUser(payload);
 
-  return c.json(user, 201);
+  return c.json(user, HttpStatusCode.Created);
 });
 
-app.put(
+usersRouter.put(
   "/:id",
   zValidator("param", z.object({ id: Id })),
   zValidator("json", updateUserSchema),
@@ -38,5 +43,3 @@ app.put(
     return c.json(user);
   },
 );
-
-export default app;

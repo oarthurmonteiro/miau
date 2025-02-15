@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --hot run src/infra/server.ts"
+    "dev": "bun --hot run src/server.ts",
+    "migrate": "bunx prisma migrate dev --name"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.2",

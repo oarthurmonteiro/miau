@@ -1,7 +1,9 @@
+import { HttpStatusCode } from "./enums";
+
 export class AppError extends Error {
   constructor(
     public message: string,
-    public statusCode = 500,
+    public statusCode = HttpStatusCode.InternalServerError,
     public details?: unknown,
   ) {
     super(message);
@@ -13,24 +15,30 @@ export class AppError extends Error {
 
 export class NonUniqueEmail extends AppError {
   constructor(message = "Email must be unique") {
-    super(message, 400);
+    super(message, HttpStatusCode.BadRequest);
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(message = "Resource not found") {
-    super(message, 404);
+    super(message, HttpStatusCode.NotFound);
   }
 }
 
 export class AuthenticationError extends AppError {
   constructor(message = "Unauthorized") {
-    super(message, 401);
+    super(message, HttpStatusCode.Unauthorized);
+  }
+}
+
+export class InvalidTokenError extends AuthenticationError {
+  constructor(message = "Invalid token") {
+    super(message);
   }
 }
 
 export class ValidationError extends AppError {
   constructor(message = "Validation failed", details?: unknown) {
-    super(message, 400, details);
+    super(message, HttpStatusCode.BadRequest, details);
   }
 }

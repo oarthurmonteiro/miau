@@ -3,9 +3,15 @@ import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import v1 from "./routes/v1";
 import { showRoutes } from "hono/dev";
-import { getConnInfo } from "hono/bun";
+import { HttpStatusCode } from "@shared/enums";
+import { logger } from "hono/logger";
+import { contextStorage } from "hono/context-storage";
+import type { Env } from "@infraestructure/hono/env";
 
-const app = new Hono();
+const app = new Hono<Env>();
+
+app.use(logger());
+app.use(contextStorage());
 
 // Global error handler
 app.onError((err, c) => {
@@ -24,7 +30,7 @@ app.onError((err, c) => {
 
   // Generic error handler
   console.error("Unhandled error:", err);
-  return c.json({}, 500);
+  return c.json({}, HttpStatusCode.InternalServerError);
 });
 
 app.route("/api/v1", v1);

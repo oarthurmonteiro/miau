@@ -1,9 +1,8 @@
-// infrastructure/prisma/UserRepositoryPrisma.ts
 import { prisma } from "./client";
 import { User } from "@domain/users/User";
-import type { UserRepository } from "@domain/users/UserRepository";
+import type { UserRepositoryInterface } from "@domain/users/UserRepositoryInterface";
 
-export class UserRepositoryPrisma implements UserRepository {
+export class UserRepository implements UserRepositoryInterface {
   async findById(id: number): Promise<User | null> {
     const userData = await prisma.user.findUnique({ where: { id: id } });
     if (!userData) return null;

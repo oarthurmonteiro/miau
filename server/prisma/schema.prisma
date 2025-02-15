@@ -11,11 +11,29 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
   password  String
   firstName String
   lastName  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  accounts  Account[]
+}
+
+enum AccountType {
+  owner
+  virtual
+}
+
+model Account {
+  id             Int         @id @default(autoincrement())
+  owner          User        @relation(fields: [ownerId], references: [id])
+  ownerId        Int
+  name           String
+  initialBalance Decimal     @default(0.00) // Decimal(10,2)
+  currentBalance Decimal     @default(0.00) // Decimal(10,2)
+  type           AccountType
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
 }

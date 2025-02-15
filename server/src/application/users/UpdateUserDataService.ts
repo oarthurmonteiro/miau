@@ -3,9 +3,9 @@ import type { updateUserSchema } from "./dtos";
 import { NonUniqueEmail, NotFoundError } from "@shared/errors";
 import { userOutputSchema, type UserOutputData } from "@domain/users/User";
 import { UserValidators } from "@domain/users/UserValidators";
-import { UserRepositoryPrisma } from "@infraestructure/prisma/UserRepositoryPrisma";
+import { UserRepository } from "@infraestructure/database/UserRepository";
 
-const userRepository = new UserRepositoryPrisma();
+const userRepository = new UserRepository();
 
 export async function updateUserData(
   id: number,
