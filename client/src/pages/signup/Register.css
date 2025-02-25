@@ -1,0 +1,122 @@
+.register-header {
+	padding: 1.25rem 0;
+	display: flex;
+	justify-content: space-between;
+}
+
+.register-footer {
+	height: 5rem;
+	display: flex;
+	gap: 2rem;
+	justify-content: end;
+	align-items: center;
+}
+
+.email-register-input {
+	width: 100%;
+	text-align: center;
+	font-size: 3rem;
+	font-weight: bold;
+
+	&:focus {
+		outline: none;
+	}
+}
+
+.get-started-button {
+	animation: dynamicInnerShadow 1.2s linear infinite;
+}
+
+@keyframes dynamicInnerShadow {
+	0% {
+		/* inset */ box-shadow: 4px 2px 4px #f8cd0e;
+	}
+
+	25% {
+		/* inset */ box-shadow: -2px 4px 4px #f8cd0e;
+	}
+
+	50% {
+		/* inset */ box-shadow: -4px -2px 4px #f8cd0e;
+	}
+
+	75% {
+		/* inset */ box-shadow: 2px -4px 4px #f8cd0e;
+	}
+
+	100% {
+		/* inset */ box-shadow: 4px 2px 4px #f8cd0e;
+	}
+	/* 0% {
+        box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 14px 6px rgba(248, 205, 14, 0.5);
+      }
+      100% {
+        box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+      } */
+}
+
+.c-stepper__item {
+	position: relative;
+	display: flex;
+	gap: 1rem;
+
+	&:before {
+		content: "";
+		flex: 0 0 var(--circle-size);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: var(--circle-size);
+		border-radius: 50%;
+		/* background-color: lightgrey; */
+	}
+
+	&::before {
+		background-color: none;
+		border: 0.25rem solid #f8cd0e;
+	}
+
+	&.complete::before {
+		background-color: #ffc2c2;
+		border: none;
+	}
+
+	&.current::before {
+		background-color: #f8cd0e;
+		border: none;
+	}
+
+	&:not(:last-child) {
+		padding-bottom: 4rem;
+
+		&:after {
+			content: "";
+			position: absolute;
+			left: 0;
+			top: calc(var(--circle-size) + var(--spacing));
+			bottom: var(--spacing);
+			z-index: -1;
+			transform: translateX(calc(var(--circle-size) / 2));
+			width: 2px;
+			background-color: #e0e0e0;
+		}
+	}
+}
+
+.c-stepper__title {
+	font-weight: bold;
+	font-size: clamp(1rem, 4vw, 1.25rem);
+	/* margin-bottom: clamp(0.85rem, 2vmax, 1rem); */
+}
+
+.c-stepper__desc {
+	color: grey;
+	font-size: clamp(0.85rem, 2vmax, 1rem);
+}
+
+.c-stepper__content {
+	max-width: 700px;
+}

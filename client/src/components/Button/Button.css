@@ -1,0 +1,62 @@
+button {
+	--color: var(--color-default);
+	cursor: pointer;
+	background: none;
+	border: none;
+	border-radius: 0.25rem;
+	padding: .5rem 1.5rem;
+	font-family: inherit;
+	font-weight: bold;
+	color: rgb(var(--color));
+
+	&.primary {
+		--color: var(--color-primary);
+	}
+
+	&.secondary {
+		--color: var(--color-secondary);
+	}
+
+	&.md {
+		font-size: 1rem;
+	}
+
+	&.lg {
+		font-size: 1.2rem;
+	}
+
+	&.xl {
+		font-size: 1.5rem;
+		padding: .5rem 2rem;
+	}
+
+	&.pill {
+		border-radius: 4rem;
+	}
+
+	&.outlined {
+		border: 0.125rem solid rgb(var(--color));
+	}
+
+	&.text {
+		padding: .375rem .625rem;
+		box-shadow: none;
+
+		&:hover {
+			background-color: rgba(var(--color), .4);
+		}
+	}
+
+	&:hover {
+		opacity: 0.5;
+	}
+
+	&:focus {
+		outline-offset: .8rem;
+		outline-color: var(--color);
+	}
+
+	&:active {
+		transform: scale(0.94);
+	}
+}

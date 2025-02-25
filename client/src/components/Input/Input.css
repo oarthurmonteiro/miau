@@ -1,0 +1,15 @@
+input {
+	font-family: inherit;
+    color: inherit;
+    caret-color: var(--color-default);
+    
+
+    &.borderless {
+        border: none;
+    }
+
+    &::placeholder {
+		opacity: 0.25;
+		font-weight: normal;
+	}
+}
