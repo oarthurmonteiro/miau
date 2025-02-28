@@ -1,5 +1,6 @@
 button {
 	--color: var(--color-default);
+	display: flex;
 	cursor: pointer;
 	background: none;
 	border: none;
@@ -38,12 +39,16 @@ button {
 		border: 0.125rem solid rgb(var(--color));
 	}
 
+	&.borderless {
+		border: none;
+	}
+
 	&.text {
 		padding: .375rem .625rem;
 		box-shadow: none;
 
 		&:hover {
-			background-color: rgba(var(--color), .4);
+			background-color: rgba(var(--color), 0.4);
 		}
 	}
 

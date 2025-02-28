@@ -3,11 +3,13 @@ import "./Button.css";
 
 type ButtonProps = {
     color?: "default" | "primary" | "secondary";
-    variant?: "outlined" | "text";
+    variant?: "outlined" | "text" | "borderless";
     size?: "sm" | "md" | "lg" | "xl";
-    shape?: 'default' | 'pill'
+    shape?: 'default' | 'pill' | 'circle';
+    icon?: React.ReactNode;
     htmlType?: 'submit' | 'button' | 'reset';
     text?: string;
+    disabled?: boolean;
     children?: React.ReactNode;
     classNames?: string;
     styles?: React.CSSProperties;
@@ -21,6 +23,8 @@ export function Button(props: ButtonProps) {
         size = "md",
         shape = 'default',
         htmlType = 'button',
+        disabled = false,
+        icon,
         text,
         children,
         classNames,
@@ -28,10 +32,25 @@ export function Button(props: ButtonProps) {
         onClick,
     } = props;
 
-    const classes = className(color, variant, size, shape, classNames);
+    console.log(disabled)
+
+    const classes = className(
+        color,
+        variant,
+        size,
+        shape,
+        classNames
+    );
 
     return (
-        <button onClick={onClick} type={htmlType} className={classes} style={styles}>
+        <button
+            disabled={disabled}
+            onClick={onClick}
+            type={htmlType}
+            className={classes}
+            style={styles}
+        >
+            {icon}
             {children ?? text}
         </button>
     );

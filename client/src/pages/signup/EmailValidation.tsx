@@ -1,17 +1,15 @@
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
-import { useState } from "react";
+import { useContext } from "react";
+import { UserDataContext } from "./UserData";
 
 type EmailValidationProps = {
     onSubmit: () => void
 }
 
-export function EmailValidation({onSubmit}: EmailValidationProps) {
-    const [email, setEmail] = useState('');
+export function EmailValidation({ onSubmit }: EmailValidationProps) {
 
-    function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setEmail(e.target.value);
-    }
+    const { userData, handleUserDataUpdate } = useContext(UserDataContext);
 
     return (
         <div
@@ -35,8 +33,8 @@ export function EmailValidation({onSubmit}: EmailValidationProps) {
             </label>
 
             <Input
-                value={email}
-                onChange={handleEmailChange}
+                value={userData?.email}
+                onChange={(e) => handleUserDataUpdate({ email: e.target.value })}
                 variant="borderless"
                 classNames="email-register-input" />
 

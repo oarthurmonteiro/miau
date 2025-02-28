@@ -2,11 +2,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap");
 
 :root {
-	--color-default: 55,69,90; /*#37455a*/
+	--color-default: 55, 69, 90; /*#37455a*/
 	--color-primary: 248, 205, 14; /*#f8cd0e*/
 	--color-secondary: 255, 194, 194; /*#ffc2c2*/
-	--circle-size: clamp(1.5rem, 5vw, 3rem);
-	--spacing: clamp(0.25rem, 2vw, 0.5rem);
 }
 
 body {

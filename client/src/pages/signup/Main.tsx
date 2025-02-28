@@ -1,12 +1,23 @@
 
 import { useState } from "react";
 import { EmailValidation } from "./EmailValidation";
-import { UserDataCollection } from "./UserDataCollection";
-
+import { UserDataForm } from "./UserDataForm";
+import { DefaultUserData, UserDataContext, type UserDataType } from "./UserData";
 
 export function Main() {
 
-    const [step, setStep] = useState(2);
+    const [step, setStep] = useState(3);
+
+    const [userData, setUserData] = useState(DefaultUserData)
+
+    function handleUserDataUpdate({ email, fullName, password }: Partial<UserDataType>) {
+        const newUserData = { ...userData };
+        if (email) newUserData.email = email;
+        if (fullName) newUserData.fullName = fullName;
+        if (password) newUserData.password = password;
+
+        setUserData(newUserData);
+    }
 
     function handleStepToForward() {
         setStep(step + 1);
@@ -22,13 +33,20 @@ export function Main() {
                 flexGrow: 1,
             }}
         >
-            {
-                step === 1
-                    ? <EmailValidation onSubmit={handleStepToForward} />
-                    : <UserDataCollection onSubmit={handleStepToForward} onBack={handleStepToBack} />
+            <UserDataContext.Provider value={{ userData, handleUserDataUpdate }}>
+                {
+                    step === 1
+                        ? <EmailValidation
+                            onSubmit={handleStepToForward}
+                        />
+                        : <UserDataForm
+                            step={step}
+                            onSubmit={handleStepToForward}
+                            onBack={handleStepToBack}
+                        />
 
-            }
-
+                }
+            </UserDataContext.Provider>
         </main>
     );
 }

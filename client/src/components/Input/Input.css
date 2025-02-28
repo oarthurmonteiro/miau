@@ -1,15 +1,27 @@
 input {
 	font-family: inherit;
-    color: inherit;
-    caret-color: var(--color-default);
-    
+	font-size: inherit;
+	color: inherit;
+	caret-color: var(--color-default);
 
-    &.borderless {
-        border: none;
-    }
+	&.borderless {
+		border: none;
 
-    &::placeholder {
+		&:focus {
+			outline: none;
+		}
+	}
+
+	&::placeholder {
 		opacity: 0.25;
 		font-weight: normal;
 	}
+
+	&.with-end-content {
+		padding-right: 5rem;
+	}
+}
+
+.password-with-visibility {
+	position: relative;
 }
