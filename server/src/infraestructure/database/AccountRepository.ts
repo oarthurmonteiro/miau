@@ -1,5 +1,5 @@
-import type { AccountRepositoryInterface } from "@domain/account/AccountRepositoryInterface";
-import { Account } from "@domain/account/Account";
+import type { AccountRepositoryInterface } from "@domain/accounts/AccountRepositoryInterface";
+import { Account } from "@domain/accounts/Account";
 import { prisma } from "./client";
 
 export class AccountRepository implements AccountRepositoryInterface {

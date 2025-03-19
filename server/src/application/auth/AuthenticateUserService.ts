@@ -3,36 +3,32 @@ import { UserRepository } from "@infraestructure/database/UserRepository";
 import { generateToken } from "@infraestructure/auth/TokenService";
 import { AuthenticationError } from "@shared/errors";
 import { successfullLoginOutput, type SuccefullLoginOutput } from "./dtos";
+import { SessionRepository } from "@infraestructure/database/SessionRepository";
+import {
+  type SessionOutputType,
+  baseSessionSchema,
+  Session,
+} from "@domain/sessions/Session";
 
-export async function authenticateUser(data: {
+export async function authenticateUser(userAuth: {
   email: string;
   password: string;
-}): Promise<SuccefullLoginOutput> {
+}): Promise<SessionOutputType> {
   const userRepository = new UserRepository();
-  const user = await userRepository.findByEmail(data.email);
+  const user = await userRepository.findByEmail(userAuth.email);
 
-  if (!user || !(await user.checkPasswordIdentity(data.password))) {
+  if (!user || !(await user.checkPasswordIdentity(userAuth.password))) {
     throw new AuthenticationError();
   }
 
-  const expirationAccessToken = 60 * 15 * 750; // 15 minutes in seconds
-  const expirationRefreshToken = 60 * 60 * 24 * 7; // 7 days in seconds
-
-  const accessToken = await generateToken(
-    { sub: user.data.id },
-    expirationAccessToken,
-    "access",
-  );
-
-  const refreshToken = await generateToken(
-    { sub: user.data.id },
-    expirationRefreshToken * 60,
-    "refresh",
-  );
-
-  return successfullLoginOutput.parse({
-    accessToken,
-    refreshToken,
-    expiresIn: expirationAccessToken,
+  const sessionExpiresAt = new Date().getTime() + 2 * 60 * 60 * 1000;
+  const sessionRepository = new SessionRepository();
+  const session = new Session({
+    userId: user.data.id as number,
+    expiresAt: new Date(sessionExpiresAt),
   });
+
+  return baseSessionSchema.parse(
+    (await sessionRepository.create(session)).data,
+  );
 }

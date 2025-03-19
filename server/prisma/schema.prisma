@@ -18,7 +18,17 @@ model User {
   lastName  String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now())
+  sessions Session[]
   accounts  Account[]
+}
+
+model Session {
+  id Int @id @default(autoincrement())
+  secret String @unique @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime 
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum AccountType {

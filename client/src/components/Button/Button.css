@@ -1,21 +1,22 @@
 button {
-	--color: var(--color-default);
-	display: flex;
+	--color: var(--rgb-default);
+	/* display: flex; */
 	cursor: pointer;
 	background: none;
 	border: none;
-	border-radius: 0.25rem;
+	border-radius: 0.75rem;
 	padding: .5rem 1.5rem;
 	font-family: inherit;
 	font-weight: bold;
+	text-transform: lowercase;
 	color: rgb(var(--color));
 
 	&.primary {
-		--color: var(--color-primary);
+		--color: var(--rgb-primary);
 	}
 
 	&.secondary {
-		--color: var(--color-secondary);
+		--color: var(--rgb-secondary);
 	}
 
 	&.md {
@@ -44,12 +45,13 @@ button {
 	}
 
 	&.text {
-		padding: .375rem .625rem;
+		/* padding: .375rem .625rem; */
+		padding: 0;
 		box-shadow: none;
-
+		/* 
 		&:hover {
 			background-color: rgba(var(--color), 0.4);
-		}
+		} */
 	}
 
 	&:hover {
@@ -57,8 +59,7 @@ button {
 	}
 
 	&:focus {
-		outline-offset: .8rem;
-		outline-color: var(--color);
+		outline-color: rgb(var(--color));
 	}
 
 	&:active {

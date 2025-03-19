@@ -1,8 +1,20 @@
+.danger {
+	color: red;
+}
+
 input {
 	font-family: inherit;
 	font-size: inherit;
+	padding-inline: .75rem;
 	color: inherit;
-	caret-color: var(--color-default);
+	border-radius: 0.75rem;
+	min-height: 2.5rem;
+	caret-color: rgb(var(--rgb-default));
+	background-color: rgb(var(--rgb-tertiary));
+
+	&.danger {
+		border-color: red;
+	}
 
 	&.borderless {
 		border: none;

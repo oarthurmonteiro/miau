@@ -11,6 +11,7 @@ export const Decimal = z.custom<Prisma.Decimal>((val) => {
   try {
     return new Prisma.Decimal(val);
   } catch (err) {
+    console.error(err);
     return false;
   }
 });

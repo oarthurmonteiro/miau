@@ -1,0 +1,15 @@
+.alert {
+    --color: blue;
+    border: 1px solid var(--color);
+    border-radius: .25rem;
+    padding: .375rem .625rem;
+    color: var(--color);
+    display: flex;
+    gap: .625rem;
+
+    &.danger {
+        --color: red;
+    }
+
+
+}

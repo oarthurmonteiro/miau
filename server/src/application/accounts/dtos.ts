@@ -1,4 +1,4 @@
-import { baseAccountSchema } from "@domain/account/Account";
+import { baseAccountSchema } from "@domain/accounts/Account";
 
 export const createAccountSchema = baseAccountSchema.pick({
   name: true,

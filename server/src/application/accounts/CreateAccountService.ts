@@ -4,7 +4,7 @@ import {
   Account,
   accountOutputSchema,
   type AccountOutputData,
-} from "@domain/account/Account";
+} from "@domain/accounts/Account";
 import { AccountRepository } from "@infraestructure/database/AccountRepository";
 
 export async function createAccount(

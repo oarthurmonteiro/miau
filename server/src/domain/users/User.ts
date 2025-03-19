@@ -1,3 +1,4 @@
+import { Model } from "@domain/Model";
 import { Email, Id, Password } from "@shared/types";
 import { z } from "zod";
 
@@ -17,51 +18,71 @@ const userClassSchema = baseUserSchema.partial({
   updatedAt: true,
 });
 
-const userClassDataSchema = userClassSchema.omit({ password: true });
+// const userClassDataSchema = userClassSchema.omit({ password: true });
 
 export const userOutputSchema = baseUserSchema.omit({ password: true });
+
 export type UserOutputData = z.infer<typeof userOutputSchema>;
 
-export class User {
-  #data;
-  #password;
-
+export class User extends Model<typeof userClassSchema> {
   constructor(data: z.infer<typeof userClassSchema>) {
-    const { password } = data;
-
-    this.#data = userClassDataSchema.parse(data);
-    this.#password = password;
+    super(userClassSchema, data);
   }
 
-  public get data() {
-    return this.#data;
-  }
-
-  public set data(newData: z.infer<typeof userClassDataSchema>) {
-    this.#data = userClassDataSchema.parse({
-      ...this.#data,
-      newData,
-    });
-  }
-
-  public get password() {
-    return this.#password;
-  }
-
-  public set password(newPassword: string) {
-    this.#password = newPassword;
-  }
-
-  public async encryptPassword(pwd = this.#password): Promise<string> {
-    this.password = await Bun.password.hash(pwd, {
+  public async encryptPassword(pwd = this.data.password): Promise<string> {
+    this.data.password = await Bun.password.hash(pwd, {
       algorithm: "bcrypt",
       cost: 10, // number between 4-31
     });
 
-    return this.password;
+    return this.data.password;
   }
 
   public async checkPasswordIdentity(pwd: string): Promise<boolean> {
-    return (await this.encryptPassword(pwd)) === this.password;
+    return (await this.encryptPassword(pwd)) === this.data.password;
   }
 }
+
+// export class User {
+//   #data;
+//   #password;
+
+//   constructor(data: z.infer<typeof userClassSchema>) {
+//     const { password } = data;
+
+//     this.#data = userClassDataSchema.parse(data);
+//     this.#password = password;
+//   }
+
+//   public get data() {
+//     return this.#data;
+//   }
+
+//   public set data(newData: z.infer<typeof userClassDataSchema>) {
+//     this.#data = userClassDataSchema.parse({
+//       ...this.#data,
+//       newData,
+//     });
+//   }
+
+//   public get password() {
+//     return this.#password;
+//   }
+
+//   public set password(newPassword: string) {
+//     this.#password = newPassword;
+//   }
+
+//   public async encryptPassword(pwd = this.#password): Promise<string> {
+//     this.password = await Bun.password.hash(pwd, {
+//       algorithm: "bcrypt",
+//       cost: 10, // number between 4-31
+//     });
+
+//     return this.password;
+//   }
+
+//   public async checkPasswordIdentity(pwd: string): Promise<boolean> {
+//     return (await this.encryptPassword(pwd)) === this.password;
+//   }
+// }

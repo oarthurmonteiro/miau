@@ -19,8 +19,12 @@
 	font-weight: bold;
 }
 
+input {
+	background: none;
+}
+
 .get-started-button {
-	animation: dynamicInnerShadow 1.2s linear infinite;
+	animation: pulseButton 1.5s linear infinite;
 }
 
 @keyframes dynamicInnerShadow {
@@ -43,13 +47,16 @@
 	100% {
 		/* inset */ box-shadow: 4px 2px 4px #f8cd0e;
 	}
-	/* 0% {
-        box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
-      }
-      50% {
-        box-shadow: 0 0 14px 6px rgba(248, 205, 14, 0.5);
-      }
-      100% {
-        box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
-      } */
+}
+
+@keyframes pulseButton {
+	0% {
+		box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 14px 6px rgba(248, 205, 14, 0.5);
+	}
+	100% {
+		box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+	}
 }

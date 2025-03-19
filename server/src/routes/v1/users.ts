@@ -22,13 +22,13 @@ usersRouter.get(
   },
 );
 
-usersRouter.post("/", zValidator("json", registerUserSchema), async (c) => {
-  const payload = c.req.valid("json");
+// usersRouter.post("/", zValidator("json", registerUserSchema), async (c) => {
+//   const payload = c.req.valid("json");
 
-  const user = await registerUser(payload);
+//   const user = await registerUser(payload);
 
-  return c.json(user, HttpStatusCode.Created);
-});
+//   return c.json(user, HttpStatusCode.Created);
+// });
 
 usersRouter.put(
   "/:id",

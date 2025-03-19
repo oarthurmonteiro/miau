@@ -2,32 +2,34 @@ import className from "@lib/classNames";
 // import EyeIcon from '@assets/eye.svg';
 // import EyeSlashedIcon from '@assets/eye-slashed.svg';
 import "./Input.css";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import '@fortawesome/fontawesome-free'
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import { Button } from "@components/Button";
 
-
 type InputProps = {
-    value?: string,
+    name: string,
     variant?: "outlined" | "borderless";
-    type?: "text" | "password";
+    type?: "email" | "text" | "password";
     disabled?: boolean;
     classNames?: string;
+    error?: string
+    label?: string,
     styles?: React.CSSProperties;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
     onEnterKeyPress?: () => void
-};
+} & ComponentProps<"input">;
 
 export function Input(props: InputProps) {
     const {
         type = "text",
         variant = "outlined",
-        value = '',
         disabled = false,
+        name,
+        label,
         classNames,
         styles,
+        error,
         ...rest
     } = props;
 
@@ -37,20 +39,36 @@ export function Input(props: InputProps) {
         }
     }
 
-    const classes = className(variant, classNames);
+    let dangerClass = '';
+    if (error) {
+        dangerClass = 'danger';
+    }
+
+    const classes = className(variant, classNames, dangerClass);
 
     return (
-        <input
-            disabled={disabled}
-            onChange={(e) => props.onChange?.(e)}
-            onKeyDown={handlerKeyPress}
-            value={value}
-            type={type}
-            placeholder="type here"
-            className={classes}
-            style={styles}
-            {...rest}
-        />
+        <div className="flex flex-col gap-0.5">
+
+            {label && <label htmlFor={name} className="font-bold">{label}</label>}
+            <input
+                name={name}
+                disabled={disabled}
+                onKeyDown={handlerKeyPress}
+                type={type}
+                placeholder="escreva aqui..."
+                className={classes}
+                style={styles}
+                {...rest}
+            />
+
+            {
+                error && (
+                    <small className="danger">
+                        {error}
+                    </small>
+                )
+            }
+        </div>
     );
 }
 

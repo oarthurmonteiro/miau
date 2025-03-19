@@ -31,9 +31,7 @@ export function Button(props: ButtonProps) {
         styles,
         onClick,
     } = props;
-
-    console.log(disabled)
-
+    
     const classes = className(
         color,
         variant,

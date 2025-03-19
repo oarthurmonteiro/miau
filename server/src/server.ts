@@ -7,6 +7,7 @@ import { HttpStatusCode } from "@shared/enums";
 import { logger } from "hono/logger";
 import { contextStorage } from "hono/context-storage";
 import type { Env } from "@infraestructure/hono/env";
+import { cors } from "hono/cors";
 
 const app = new Hono<Env>();
 
@@ -32,6 +33,17 @@ app.onError((err, c) => {
   console.error("Unhandled error:", err);
   return c.json({}, HttpStatusCode.InternalServerError);
 });
+
+app.use(
+  "/api/v1/*",
+  cors({
+    // `c` is a `Context` object
+    origin: (origin, c) => {
+      console.log(origin);
+      return origin.includes("localhost") ? origin : "http://example.com";
+    },
+  }),
+);
 
 app.route("/api/v1", v1);
 
