@@ -1,38 +1,30 @@
-import { verifyToken } from "@infraestructure/auth/TokenService";
-import { InvalidTokenError } from "@shared/errors";
+import { SessionRepository } from "@infraestructure/database/SessionRepository";
+import { AuthenticationError } from "@shared/errors";
+import { getCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 
 export function authnMiddleware() {
   return createMiddleware(async (c, next) => {
     try {
-      const { authorization } = c.req.header();
+      const sessionSecret = getCookie(c, "session");
 
-      // if there is not a header authorization
-      // and the header is not a bearer token
-      if (!authorization || !authorization.startsWith("Bearer ")) {
+      if (!sessionSecret) {
         throw new Error();
       }
 
-      const token = authorization.replace("Bearer ", "");
+      const sessionRepository = new SessionRepository();
+      const session = await sessionRepository.findActiveBySecret(sessionSecret);
 
-      // console.log(
-      //   await sign({
-      //     sub: 1,
-      //     iat: Math.floor(Date.now() / 1000),
-      //     exp: Math.floor(Date.now() / 1000) + 60 * 5 * 10, // Token expires in 5 minutes
-      //   }, process.env.SECRET_ACCESS_TOKEN),
-      // );
-      const { sub } = await verifyToken(token, "access");
-      if (!sub) {
+      if (!session) {
         throw new Error();
       }
 
-      c.set("userId", sub);
+      c.set("userId", session.data.userId);
 
       await next();
     } catch (err) {
       console.error(err);
-      throw new InvalidTokenError();
+      throw new AuthenticationError();
     }
   });
 }

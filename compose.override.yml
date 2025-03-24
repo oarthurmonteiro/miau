@@ -1,0 +1,32 @@
+services:
+  server:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./server:/app
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.miau-server.rule=Host(`miau.localhost.direct`) && PathPrefix(`/api/`)"
+      # - "traefik.http.routers.miau-server.priority=10"  # Higher priority than client
+
+  client:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./client:/app
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.miau-client.rule=Host(`miau.localhost.direct`)"
+      - "traefik.http.services.miau-client.loadbalancer.server.port=5173"  # Replace 80 with your app's port
+
+      # # Add middleware to strip paths (if needed)
+      # - "traefik.http.routers.miau-client.middlewares=client-stripprefix"
+      # - "traefik.http.middlewares.client-stripprefix.stripprefix.prefixes=/"
+
+networks:
+  traefik:
+    external: true

@@ -1,26 +1,49 @@
-import { Button } from "@components/Button";
+import { Button as CustomButon } from "@components/Button";
 import { Logo } from "@components/Logo";
-import { Input } from "@components/Input";
 import { request } from "@lib/client";
 import { useLocation } from "wouter";
 import type { FormEvent } from "react";
 
+import { Form, Input, Button, Spinner, addToast } from "@heroui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 function Main() {
     const [, navigate] = useLocation();
+    const queryClient = useQueryClient();
+
+    const signInMutation = useMutation({
+        mutationKey: ['auth', 'sign-in'],
+        mutationFn: (payload: FormData) =>
+            request('/api/v1/auth/sign-in', {
+                method: 'POST',
+                payload
+            }),
+        onError: (error: Error) => {
+            addToast({
+                title: "Falha na autenticação",
+                description: error.message || "Não conseguimos te localizar. Verifique suas credenciais e tente novamente.",
+                color: 'warning',
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            navigate('/dashboard')
+        }
+    })
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const payload = new FormData(event.currentTarget);
 
-        const response = await request('http://localhost:3000/api/v1/auth/signin', {
-            method: 'POST',
-            payload
-        });
+        signInMutation.mutate(payload);
+    }
 
-        if (response.ok) {
-            navigate("/dashboard");
-        }
+    if (signInMutation.isPending) {
+        return (
+            <main className="grow content-center flex justify-center">
+                <Spinner size="lg" variant="wave" />
+            </main>
+        );
     }
 
     return (
@@ -32,36 +55,51 @@ function Main() {
                         <p>Bora dar um bisu no din-din?</p>
                     </div>
 
-                    <form onSubmit={handleSubmit}
-                        className="flex flex-col gap-4">
-                        <Input required autoFocus
+                    <Form onSubmit={handleSubmit} className="flex flex-col gap-4" >
+                        <Input
+                            isRequired
+                            label="E-mail"
+                            labelPlacement="outside"
                             name="email"
+                            placeholder="ex: email@gmail.com"
+                            value={"arthur@email.com"}
                             type="email"
-                            placeholder=""
-                            label="E-mail" />
+                        />
 
-                        <Input required
+                        <Input
+                            isRequired
+                            label="Senha"
+                            labelPlacement="outside"
                             name="password"
                             type="password"
-                            placeholder=""
-                            label="Password" />
-
-                        <Button htmlType="submit"
-                            text="Sign In"
-                            color="primary"
-
+                            value={"senhamuitogrande"}
+                            placeholder="ex: minha-senha-super-segura"
                         />
-                    </form>
+
+                        <Button
+                            type="submit"
+                            color="primary"
+                            variant="bordered"
+                            className="w-full font-bold"
+                        >
+                            entrar
+                        </Button>
+
+                    </Form>
 
                     <hr />
 
                     <div className="flex flex-col gap-3">
                         <small className="font-bold">Ainda não tem uma conta? Facin de resolver</small>
                         <Button
-                            htmlType="button"
-                            text="Sign Up"
+                            type="button"
                             color="secondary"
-                            onClick={() => navigate("/sign-up")} />
+                            variant="bordered"
+                            onPress={() => navigate("/sign-up")}
+                        >
+                            criar conta
+                        </Button>
+
                     </div>
                 </div>
             </div>
@@ -71,18 +109,11 @@ function Main() {
 
 export function SignIn() {
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                padding: "0 8rem",
-                height: "100vh",
-            }}
-        >
+        <div className="flex flex-col h-screen px-32">
             <header className="register-header">
                 <Logo />
                 <div>
-                    <Button shape="pill" color="secondary" text="help" />
+                    <CustomButon shape="pill" color="secondary" text="help" />
                 </div>
             </header>
 

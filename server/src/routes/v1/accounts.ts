@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 
-import { HttpStatusCode } from "@shared/enums";
+import * as HttpStatusCode from "@shared/enums";
 import { authnMiddleware } from "@shared/middlewares/authnMiddleware";
 import { createAccountSchema } from "@application/accounts/dtos";
 import { getUserId } from "@infraestructure/hono/env";

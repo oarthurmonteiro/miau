@@ -1,26 +1,22 @@
 @import url("https://fonts.googleapis.com/css?family=Coiny:regular,bold,italic&subset=latin,latin-ext");
 @import url("https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap");
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
+/* @theme {
 	--color-default: #37455a;
 	--color-primary: #f8cd0e;
 	--color-secondary: #ffc2c2;
 	--color-tertiary: #e6e6fa;
-}
+} */
 
 :root {
 	--rgb-default: 55, 69, 90; /*#37455a*/
 	--rgb-primary: 248, 205, 14; /*#f8cd0e*/
 	--rgb-secondary: 255, 194, 194; /*#ffc2c2*/
 	--rgb-tertiary: 230, 230, 250; /*#E6E6FA*/
-}
-
-@layer components {
-	.typography {
-		color: var(--rgb-default);
-	}
 }
 
 body {

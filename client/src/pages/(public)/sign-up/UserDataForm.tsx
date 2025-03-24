@@ -1,12 +1,9 @@
 import EnterKey from "@assets/enter-key.svg";
 import LeftChevron from "@assets/left-chevron.svg";
-import { Button } from "@components/Button";
 import { Stepper } from "@components/Stepper";
-import { z } from "zod";
-import { type FormEvent, useContext, useState } from "react";
+import { type FormEvent, useContext } from "react";
 import { steps, UserDataContext } from "./UserData";
-import { Password as PasswordSchema } from "@lib/types";
-import { Alert } from "@components/Alert";
+import { Button, Form } from "@heroui/react";
 
 type UserDataCollectionProps = {
     step: number;
@@ -18,16 +15,20 @@ export function UserDataForm({ step, onSubmit, onBack }: UserDataCollectionProps
 
     return (
 
-        <div className="w-full flex justify-between">
+        <div className="w-full flex justify-between gap-16">
 
-            <div className="flex flex-col content-start gap-2">
+            <div className="flex flex-col content-start gap-10 transition-opacity">
 
-                <Button variant="text" onClick={onBack} classNames="flex content-center gap-4 font-bold">
-                    <LeftChevron width={'.65rem'} />
-                    <span>Back</span>
+                <Button
+                    color="secondary" variant="flat"
+                    startContent={<LeftChevron width={'.65rem'} />}
+                    className="w-fit font-bold p-0 text-tertiary"
+                    onPress={onBack}
+                >
+                    Back
                 </Button>
-                <DataCollect currentStepId={step} onSubmit={onSubmit} />
 
+                <DataCollect currentStepId={step} onSubmit={onSubmit} />
             </div>
 
             <div className="w-2/5">
@@ -45,8 +46,7 @@ type DataCollectProps = {
 
 function DataCollect({ currentStepId, onSubmit }: DataCollectProps) {
 
-    const { userData, handleUserDataUpdate } = useContext(UserDataContext);
-    const [errorMsg, setErrorMsg] = useState('');
+    const { handleUserDataUpdate } = useContext(UserDataContext);
 
     const currentStep = steps.find(({ id }) => id === currentStepId);
 
@@ -60,48 +60,29 @@ function DataCollect({ currentStepId, onSubmit }: DataCollectProps) {
 
         const [[key, value]] = payload.entries();
 
-        try {
-            switch (key) {
-                case 'fullName': {
-                    validateFullName(value as string);
-                    break;
-                }
-                case 'password': {
-                    validatePassword(value as string);
-                    break;
-                }
-
-                case 'passwordConfirm': {
-                    validatePasswordConfirm(value as string, userData?.password as string);
-                    break;
-                }
-            }
-
-            handleUserDataUpdate({ [key]: value });
-            setErrorMsg('');
-            onSubmit();
-        } catch (err) {
-            if (err instanceof Error) setErrorMsg(err.message);
-        }
-
+        handleUserDataUpdate({ [key]: value });
+        onSubmit();
     }
 
     return (
-        <form
+        <Form
             onSubmit={handleSubmit}
-            className="flex flex-col content-start justify-between gap-12">
+            className="grow flex flex-col content-start justify-between ">
 
             <Component />
 
-            {errorMsg && <Alert message={errorMsg} variant="danger" />}
-
             <div className="flex content-center gap-6">
+
                 <Button
-                    htmlType="submit"
+                    type="submit"
+                    radius="full"
                     color="primary"
                     size="lg"
-                    text="next"
-                    shape="pill" />
+                    className="text-xl"
+                    variant="bordered"
+                >
+                    próximo
+                </Button>
 
                 <div className="flex items-center gap-3">
                     <div className="bg-secondary rounded-lg p-2 flex items-center">
@@ -110,32 +91,6 @@ function DataCollect({ currentStepId, onSubmit }: DataCollectProps) {
                     <span>Or press Enter</span>
                 </div>
             </div>
-        </form>
+        </Form>
     )
-}
-
-const validateFullName = (fullName: string): boolean => {
-    const validSchema = z.string().regex(/^[A-Za-z'-]{2,16} [\S ]{2,64}$/);
-    if (false === validSchema.safeParse(fullName).success) {
-        throw new Error("Full names are expected to have at least two words with more than 2 chars")
-    }
-
-    return true;
-}
-
-const validatePassword = (password: string): boolean => {
-    const safedPassword = PasswordSchema.safeParse(password)
-    if (false === safedPassword.success) {
-        throw new Error("Your secret it's not on format expected by us");
-    }
-
-    return true;
-}
-
-const validatePasswordConfirm = (passwordConfirm: string, password: string): boolean => {
-    if (passwordConfirm !== password) {
-        throw new Error("It's different from previous password");
-    }
-
-    return true;
 }

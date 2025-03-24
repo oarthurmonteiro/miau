@@ -1,4 +1,3 @@
-import { Button } from "@components/Button";
 import { Logo } from "@components/Logo";
 import { request } from "@lib/client";
 import { DefaultUserData, steps, UserDataContext, type UserDataType } from "./UserData";
@@ -6,8 +5,49 @@ import { useState } from "react";
 import { EmailValidation } from "./EmailValidation";
 import { UserDataForm } from "./UserDataForm";
 import "./Register.css"
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addToast, Button, Spinner } from "@heroui/react";
+import { useLocation } from "wouter";
 
 function Main() {
+
+	const [, navigate] = useLocation();
+	const queryClient = useQueryClient();
+
+	const registerMutation = useMutation({
+		mutationKey: ['auth', 'sign-up'],
+		mutationFn: (userData: UserDataType) => {
+			const fullName = userData.fullName.replace(
+				/\w\S*/g,
+				text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+			);
+
+			const [firstName, ...lastName] = fullName.split(' ');
+
+			const payload = {
+				email: userData.email,
+				password: userData.password,
+				lastName: lastName.join(' '),
+				firstName,
+			};
+
+			return request('http://localhost:3000/api/v1/auth/sign-up', {
+				method: 'POST',
+				payload
+			})
+		},
+		onError: (error: Error) => {
+			addToast({
+				title: "Falha na autenticação",
+				description: error.message || "Deu um probleminha no seu registro...",
+				color: 'danger',
+			});
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['users'] });
+			navigate('/dashboard');
+		}
+	})
 
 	const [step, setStep] = useState(1);
 	const [userData, setUserData] = useState(DefaultUserData)
@@ -25,7 +65,7 @@ function Main() {
 		const nextStep = step + 1;
 
 		if (nextStep > steps.length) {
-			await postRegister(userData);
+			registerMutation.mutate(userData);
 			return;
 		}
 
@@ -35,6 +75,12 @@ function Main() {
 	function handleStepToBack() {
 		setStep(step - 1);
 	}
+
+	if (registerMutation.isPending) return (
+		<main className="grow">
+			<Spinner classNames={{ label: "text-foreground mt-4" }} label="wave" variant="wave" />
+		</main>
+	)
 
 	return (
 		<main className="grow">
@@ -56,44 +102,23 @@ function Main() {
 	);
 }
 
-async function postRegister(user: UserDataType) {
-	const fullName = user.fullName.replace(
-		/\w\S*/g,
-		text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
-	);
+export function SignUp() {
 
-	const [firstName, ...lastName] = fullName.split(' ');
+	const [, navigate] = useLocation();
 
-	const payload = {
-		email: user.email,
-		password: user.password,
-		lastName: lastName.join(' '),
-		firstName,
-	};
-
-	const response = await request('http://localhost:3000/api/v1/auth/signup', {
-		method: 'POST',
-		payload
-	})
-
-	console.log(response)
-}
-
-export function Register() {
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				padding: "0 8rem",
-				gap: '5rem',
-				height: "100vh",
-			}}
-		>
+		<div className="flex flex-col px-32 gap-20 h-screen">
 			<header className="register-header">
 				<Logo />
 				<div>
-					<Button shape="pill" color="secondary" text="help" />
+					<Button
+						type="button"
+						color="secondary"
+						variant="bordered"
+						onPress={() => navigate("/sign-in")}
+					>
+						entrar
+					</Button>
 				</div>
 			</header>
 

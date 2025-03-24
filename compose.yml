@@ -1,0 +1,12 @@
+services:
+  server:
+    build: ./server
+    init: true
+    # volumes:
+    #   - storage/dev.db:/app/prisma/dev.db
+  client:
+    build: ./client
+    init: true
+
+volumes:
+  storage: {}

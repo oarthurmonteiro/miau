@@ -3,7 +3,7 @@ button {
 	/* display: flex; */
 	cursor: pointer;
 	background: none;
-	border: none;
+	/* border: none; */
 	border-radius: 0.75rem;
 	padding: .5rem 1.5rem;
 	font-family: inherit;

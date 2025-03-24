@@ -1,4 +1,4 @@
-import { HttpStatusCode } from "./enums";
+import * as HttpStatusCode from "@shared/enums";
 
 export class AppError extends Error {
   constructor(

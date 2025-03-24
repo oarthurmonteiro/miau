@@ -6,20 +6,23 @@ import { registerUser } from "@application/users/RegisterUserService";
 import { getUserData } from "@application/users/GetUserDataService";
 import { updateUserData } from "@application/users/UpdateUserDataService";
 import { Id } from "@shared/types";
-import { HttpStatusCode } from "@shared/enums";
+import * as HttpStatusCode from "@shared/enums";
+import { authnMiddleware } from "@shared/middlewares/authnMiddleware";
+import { getUserId } from "@infraestructure/hono/env";
 
 export const usersRouter = new Hono();
 
-usersRouter.get(
-  "/:id",
-  zValidator("param", z.object({ id: Id })),
-  async (c) => {
-    const { id } = c.req.valid("param");
+usersRouter.use(authnMiddleware());
 
-    const user = await getUserData(id);
+usersRouter.get(
+  "/",
+  async (c) => {
+    const userId = getUserId();
+
+    const user = await getUserData(userId);
 
     return c.json(user);
-  },
+  }
 );
 
 // usersRouter.post("/", zValidator("json", registerUserSchema), async (c) => {

@@ -1,12 +1,18 @@
 type Req<T = unknown> = {
-	method: "GET" | "POST";
+	method: "GET" | "POST" | "DELETE";
 	headers?: Record<string, string>;
 	payload?: T;
 	query?: Record<string, unknown>;
 	credentials?: RequestCredentials;
 };
 
-export async function request(baseUrl: string, req: Req) {
+type Resp<T = unknown> = {
+	status: number;
+	headers: Record<string, string>;
+	body: T;
+};
+
+export async function request<T>(baseUrl: string, req: Partial<Req>) {
 	if (req.payload instanceof FormData) {
 		req.payload = Object.fromEntries(req.payload);
 	}
@@ -26,9 +32,18 @@ export async function request(baseUrl: string, req: Req) {
 		credentials: req.credentials,
 	});
 
+	const responsePayload = await response.json();
+
+	const clientResp: Resp<T> = {
+		status: response.status,
+		headers: Object.fromEntries(response.headers),
+		body: responsePayload,
+	};
+
 	if (!response.ok) {
-		throw response;
+		console.log(responsePayload);
+		throw new Error(responsePayload.error.message);
 	}
 
-	return response;
+	return clientResp;
 }

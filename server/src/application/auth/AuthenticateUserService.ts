@@ -1,8 +1,6 @@
 // application/auth/AuthenticateUserService.ts
 import { UserRepository } from "@infraestructure/database/UserRepository";
-import { generateToken } from "@infraestructure/auth/TokenService";
 import { AuthenticationError } from "@shared/errors";
-import { successfullLoginOutput, type SuccefullLoginOutput } from "./dtos";
 import { SessionRepository } from "@infraestructure/database/SessionRepository";
 import {
   type SessionOutputType,

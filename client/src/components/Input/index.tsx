@@ -3,9 +3,6 @@ import className from "@lib/classNames";
 // import EyeSlashedIcon from '@assets/eye-slashed.svg';
 import "./Input.css";
 import { type ComponentProps, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import '@fortawesome/fontawesome-free'
-import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import { Button } from "@components/Button";
 
 type InputProps = {
@@ -97,7 +94,7 @@ export function InputPassword(props: PasswordProps) {
         }
     }
 
-    const VisibilityIcon = visible ? faEyeSlash : faEye;
+    // const VisibilityIcon = visible ? faEyeSlash : faEye;
 
     return (
         <div style={styles} className={canChangeVisibility ? "password-with-visibility" : ""}>
@@ -113,7 +110,7 @@ export function InputPassword(props: PasswordProps) {
                     padding: '0',
                 }}
                     variant="borderless"
-                    icon={<FontAwesomeIcon icon={VisibilityIcon} />}
+                    // icon={<FontAwesomeIcon icon={VisibilityIcon} />}
                     onClick={handleToggleVisibility} />}
         </div>
     )

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import v1 from "./routes/v1";
 import { showRoutes } from "hono/dev";
-import { HttpStatusCode } from "@shared/enums";
+import * as HttpStatusCode from "@shared/enums";
 import { logger } from "hono/logger";
 import { contextStorage } from "hono/context-storage";
 import type { Env } from "@infraestructure/hono/env";
@@ -39,9 +39,13 @@ app.use(
   cors({
     // `c` is a `Context` object
     origin: (origin, c) => {
-      console.log(origin);
-      return origin.includes("localhost") ? origin : "http://example.com";
+      const allowedOrigin = process.env.APP_HOST;
+
+      if (!allowedOrigin) throw new Error("Allowed Origin not set");
+      
+      return allowedOrigin;
     },
+    credentials: true,
   }),
 );
 
