@@ -5,7 +5,7 @@ services:
     # volumes:
     #   - storage/dev.db:/app/prisma/dev.db
   client:
-    build: ./client
+    build: ./client-next
     init: true
 
 volumes:

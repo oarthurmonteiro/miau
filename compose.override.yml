@@ -15,13 +15,13 @@ services:
     environment:
       - NODE_ENV=development
     volumes:
-      - ./client:/app
+      - ./client-next:/app
     networks:
       - traefik
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.miau-client.rule=Host(`miau.localhost.direct`)"
-      - "traefik.http.services.miau-client.loadbalancer.server.port=5173"  # Replace 80 with your app's port
+      # - "traefik.http.services.miau-client.loadbalancer.server.port=5173"  # Replace 80 with your app's port
 
       # # Add middleware to strip paths (if needed)
       # - "traefik.http.routers.miau-client.middlewares=client-stripprefix"

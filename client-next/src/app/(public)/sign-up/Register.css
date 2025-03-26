@@ -1,0 +1,41 @@
+input {
+	background: none;
+}
+
+.get-started-button {
+	animation: pulseButton 1.5s linear infinite;
+}
+
+@keyframes dynamicInnerShadow {
+	0% {
+		/* inset */ box-shadow: 4px 2px 4px hsl(var(--color-primary));
+	}
+
+	25% {
+		/* inset */ box-shadow: -2px 4px 4px hsl(var(--color-primary));
+	}
+
+	50% {
+		/* inset */ box-shadow: -4px -2px 4px hsl(var(--color-primary));
+	}
+
+	75% {
+		/* inset */ box-shadow: 2px -4px 4px hsl(var(--color-primary));
+	}
+
+	100% {
+		/* inset */ box-shadow: 4px 2px 4px hsl(var(--color-primary));
+	}
+}
+
+@keyframes pulseButton {
+	0% {
+		box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+	}
+	50% {
+		box-shadow: 0 0 14px 6px rgba(248, 205, 14, 0.5);
+	}
+	100% {
+		box-shadow: 0 0 10px 0px rgba(248, 205, 14, 0.3);
+	}
+}

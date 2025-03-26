@@ -5,7 +5,7 @@ import { loginSchema } from "@application/auth/dtos";
 import { registerUserSchema } from "@application/users/dtos";
 import { registerUser } from "@application/users/RegisterUserService";
 import * as HttpStatusCode from "@shared/enums";
-import { getCookie, setCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { unathenticateUser } from "@application/auth/UnauthenticateUserService";
 
 export const authRouter = new Hono();
@@ -17,6 +17,8 @@ authRouter.delete("/sign-out", async (c) => {
   if (!session) throw new Error();
 
   await unathenticateUser(session);
+
+  deleteCookie(c, 'session');
 
   return c.body(null, HttpStatusCode.NoContent);
 
@@ -35,7 +37,7 @@ authRouter.post("/sign-in", zValidator("json", loginSchema), async (c) => {
     sameSite: "Strict",
   });
 
-  return c.json({});
+  return c.body(null, HttpStatusCode.NoContent);
 });
 
 authRouter.post(
