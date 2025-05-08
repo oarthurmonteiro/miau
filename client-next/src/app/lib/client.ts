@@ -1,5 +1,5 @@
 type Req<T = unknown> = {
-	method: "GET" | "POST" | "DELETE";
+	method: "GET" | "POST" | "PUT" | "DELETE";
 	headers?: Record<string, string>;
 	payload?: T;
 	query?: Record<string, unknown>;
