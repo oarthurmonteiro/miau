@@ -1,3 +1,4 @@
+import { Model } from "@domain/Model";
 import { Decimal, DecimalToNumber, Id } from "@shared/types";
 import { z } from "zod";
 
@@ -29,21 +30,8 @@ export const accountOutputSchema = baseAccountSchema
 
 export type AccountOutputData = z.infer<typeof accountOutputSchema>;
 
-export class Account {
-  #data;
-
+export class Account extends Model<typeof accountClassSchema> {
   constructor(data: z.infer<typeof accountClassSchema>) {
-    this.#data = accountClassSchema.parse(data);
-  }
-
-  public get data() {
-    return this.#data;
-  }
-
-  public set data(newData: z.infer<typeof accountClassSchema>) {
-    this.#data = accountClassSchema.parse({
-      ...this.#data,
-      newData,
-    });
+    super(accountClassSchema, data);
   }
 }

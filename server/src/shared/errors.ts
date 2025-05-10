@@ -25,6 +25,12 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class AuthorizationError extends AppError {
+  constructor(message="Forbidden") {
+    super(message, HttpStatusCode.Forbidden)
+  }
+}
+
 export class AuthenticationError extends AppError {
   constructor(message = "Unauthorized") {
     super(message, HttpStatusCode.Unauthorized);

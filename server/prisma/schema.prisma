@@ -21,6 +21,7 @@ model User {
   updatedAt DateTime  @default(now())
   sessions Session[]
   accounts  Account[]
+  // creditCards CreditCard[]
 }
 
 model Session {
@@ -47,4 +48,63 @@ model Account {
   type           AccountType
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @default(now())
+  transactions Transaction[]
 }
+
+enum TransactionType {
+  income
+  expense
+  transfer
+}
+
+model Transaction {
+  id Int @id @default(autoincrement())
+  account Account @relation(fields: [accountId], references: [id])
+  accountId Int
+  amount Decimal // Decimal(10,2)
+  type TransactionType
+  date DateTime // Date
+  description String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @default(now())
+  deletedAt DateTime?
+}
+
+
+
+// model CreditCard {
+//   id Int @id @default(autoincrement())
+//   owner          User        @relation(fields: [ownerId], references: [id])
+//   ownerId        Int
+//   name           String
+//   limit Decimal @default(0.00)
+//   dueDay Int
+//   createdAt      DateTime    @default(now())
+//   updatedAt      DateTime    @default(now())
+//   deletedAt DateTime
+//   invoices Invoice[]
+// }
+
+// enum InvoiceStatus {
+//   open
+//   closed
+//   partiallyPaid
+//   paid
+// }
+
+// model Invoice {
+//   id Int @id @default(autoincrement())
+//   creditCard CreditCard @relation(fields: [creditCardId], references: [id])
+//   creditCardId Int
+//   startDate DateTime // Date
+//   endDate DateTime // Date
+//   totalAmount Decimal // Decimal(10,2)
+//   amountPaid Decimal // Decimal(10,2)
+//   remainingBalance Decimal // Decimal(10,2)
+//   status InvoiceStatus @default(paid)
+//   createdAt      DateTime    @default(now())
+//   updatedAt      DateTime    @default(now())
+// }
+
+
+
