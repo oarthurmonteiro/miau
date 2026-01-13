@@ -1,38 +1,48 @@
 import { prisma } from "./client";
-import { User } from "@domain/users/User";
+import { encryptPassword, type User } from "@domain/users/User";
 import type { UserRepositoryInterface } from "@domain/users/UserRepositoryInterface";
 
 export class UserRepository implements UserRepositoryInterface {
   async findById(id: number): Promise<User | null> {
-    const userData = await prisma.user.findUnique({ where: { id: id } });
-    if (!userData) return null;
-
-    return new User(userData);
+    return await prisma.getClient().user.findUnique({ where: { id: id } });
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const userData = await prisma.user.findUnique({ where: { email } });
-    if (!userData) return null;
-
-    return new User(userData);
+    return await prisma.getClient().user.findUnique({ where: { email } });
   }
 
-  async create(user: User): Promise<User> {
-    const saved = await prisma.user.create({
+  async create(
+    user: Omit<User, "id" | "createdAt" | "updatedAt">,
+  ): Promise<User> {
+    console.dir({
+      originalPwd: user.password,
+      newPwd: await encryptPassword(user.password),
+    });
+
+    const saved = await prisma.getClient().user.create({
       data: {
-        ...user.data,
-        password: await user.encryptPassword(),
+        ...user,
+        password: await encryptPassword(user.password),
       },
     });
-    return new User(saved);
+    return saved;
   }
 
-  async update(user: User): Promise<User> {
-    const saved = await prisma.user.update({
-      where: { id: user.data.id },
-      data: user.data,
+  async update(
+    userId: number,
+    user: Partial<Omit<User, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<User> {
+    const saved = await prisma.getClient().user.update({
+      where: { id: userId },
+      data: {
+        ...user,
+        password:
+          typeof user.password === "string"
+            ? await encryptPassword(user.password)
+            : undefined,
+      },
     });
 
-    return new User(saved);
+    return saved;
   }
 }

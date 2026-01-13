@@ -33,7 +33,7 @@ export default function Page() {
 				firstName,
 			};
 
-			return request('http://localhost:3000/api/v1/auth/sign-up', {
+			return request('/api/v1/auth/sign-up', {
 				method: 'POST',
 				payload
 			})

@@ -11,7 +11,7 @@ function Main() {
     const [, navigate] = useLocation();
     const queryClient = useQueryClient();
 
-    const signInMutation = useMutation({
+    const { mutate, isPending } = useMutation({
         mutationKey: ['auth', 'sign-in'],
         mutationFn: (payload: FormData) =>
             request('/api/v1/auth/sign-in', {
@@ -35,10 +35,10 @@ function Main() {
         event.preventDefault();
         const payload = new FormData(event.currentTarget);
 
-        signInMutation.mutate(payload);
+        mutate(payload);
     }
 
-    if (signInMutation.isPending) {
+    if (isPending) {
         return (
             <main className="grow content-center flex justify-center">
                 <Spinner size="lg" variant="wave" />

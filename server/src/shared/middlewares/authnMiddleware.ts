@@ -19,11 +19,10 @@ export function authnMiddleware() {
         throw new Error();
       }
 
-      c.set("userId", session.data.userId);
+      c.set("userId", session.userId);
 
       await next();
     } catch (err) {
-      console.error(err);
       throw new AuthenticationError();
     }
   });

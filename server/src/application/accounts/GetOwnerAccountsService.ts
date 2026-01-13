@@ -1,12 +1,10 @@
-import {
-  accountOutputSchema,
-  type AccountOutputData,
-} from "@domain/accounts/Account";
 import { AccountRepository } from "@infraestructure/database/AccountRepository";
+import type { z } from "zod";
+import { outputAccountSchema } from "./dtos";
 
 export async function getOwnerAccounts(
   ownerId: number,
-): Promise<AccountOutputData[]> {
+): Promise<z.infer<typeof outputAccountSchema>[]> {
   const accountRepository = new AccountRepository();
 
   const accounts = await accountRepository.findManyByOwner(ownerId);
@@ -15,5 +13,5 @@ export async function getOwnerAccounts(
     return [];
   }
 
-  return accounts.map((account) => accountOutputSchema.parse(account.data));
+  return accounts.map((account) => outputAccountSchema.parse(account));
 }

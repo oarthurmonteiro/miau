@@ -2,31 +2,26 @@
 import { UserRepository } from "@infraestructure/database/UserRepository";
 import { AuthenticationError } from "@shared/errors";
 import { SessionRepository } from "@infraestructure/database/SessionRepository";
-import {
-  type SessionOutputType,
-  baseSessionSchema,
-  Session,
-} from "@domain/sessions/Session";
+import { sessionSchema, type Session } from "@domain/sessions/Session";
 
-export async function authenticateUser(userAuth: {
-  email: string;
-  password: string;
-}): Promise<SessionOutputType> {
+export async function authenticateUser(
+  email: string,
+  password: string,
+): Promise<Session> {
   const userRepository = new UserRepository();
-  const user = await userRepository.findByEmail(userAuth.email);
+  const sessionRepository = new SessionRepository();
 
-  if (!user || !(await user.checkPasswordIdentity(userAuth.password))) {
+  const user = await userRepository.findByEmail(email);
+
+  if (!user || !(await Bun.password.verify(password, user.password))) {
     throw new AuthenticationError();
   }
 
   const sessionExpiresAt = new Date().getTime() + 2 * 60 * 60 * 1000;
-  const sessionRepository = new SessionRepository();
-  const session = new Session({
-    userId: user.data.id as number,
-    expiresAt: new Date(sessionExpiresAt),
-  });
 
-  return baseSessionSchema.parse(
-    (await sessionRepository.create(session)).data,
+  const session = await sessionRepository.create(
+    new Date(sessionExpiresAt),
+    user.id,
   );
+  return sessionSchema.parse(session);
 }

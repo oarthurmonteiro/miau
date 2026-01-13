@@ -5,21 +5,24 @@ import * as HttpStatusCode from "@shared/enums";
 import { authnMiddleware } from "@shared/middlewares/authnMiddleware";
 import { getUserId } from "@infraestructure/hono/env";
 import { getOwnerAccount } from "@application/accounts/GetOwnerAccountService";
-import { AuthorizationError } from "@shared/errors";
 import { createExpense } from "@application/transactions/CreateExpenseService";
 import { createTransactionSchema } from "@application/transactions/dtos";
 
-export const transactionssRouter = new Hono();
+export const transactionsRouter = new Hono();
 
-transactionssRouter.use(authnMiddleware());
+transactionsRouter.use(authnMiddleware());
 
-transactionssRouter.post("/expense", zValidator("json", createTransactionSchema), async (c) => {
-  const payload = c.req.valid("json");
-  const ownerId = getUserId();
+transactionsRouter.post(
+  "/",
+  zValidator("json", createTransactionSchema),
+  async (c) => {
+    const payload = c.req.valid("json");
+    const ownerId = getUserId();
 
-  const account = await getOwnerAccount(payload.accountId, ownerId);
+    const account = await getOwnerAccount(payload.accountId, ownerId);
 
-  const expense = await createExpense(payload, account);
+    const expense = await createExpense(payload, { ...account, ownerId });
 
-  return c.json(account, HttpStatusCode.Created);
-});
+    return c.json(expense, HttpStatusCode.Created);
+  },
+);

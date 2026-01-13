@@ -1,16 +1,17 @@
-import { accountOutputSchema, type Account, type AccountOutputData } from "@domain/accounts/Account";
 import { AccountRepository } from "@infraestructure/database/AccountRepository";
 import { AuthorizationError } from "@shared/errors";
+import { outputAccountSchema } from "./dtos";
+import type { z } from "zod";
 
 export async function getOwnerAccount(
   accountId: number,
   ownerId: number,
-): Promise<AccountOutputData> {
+): Promise<z.infer<typeof outputAccountSchema>> {
   const accountRepository = new AccountRepository();
 
   const account = await accountRepository.findByIdAndOwner(accountId, ownerId);
-  
+
   if (!account) throw new AuthorizationError();
 
-  return accountOutputSchema.parse(account.data)
+  return outputAccountSchema.parse(account);
 }

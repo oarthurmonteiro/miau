@@ -1,17 +1,13 @@
 import type { z } from "zod";
-import type { registerUserSchema } from "./dtos";
+import { outputUserSchema, type registerUserSchema } from "./dtos";
 import { NonUniqueEmail } from "shared/errors";
 import { UserRepository } from "@infraestructure/database/UserRepository";
-import {
-  User,
-  userOutputSchema,
-  type UserOutputData,
-} from "@domain/users/User";
 import { UserValidators } from "@domain/users/UserValidators";
+import type { UserWithoutPassword } from "@domain/users/User";
 
 export async function registerUser(
   payload: z.infer<typeof registerUserSchema>,
-): Promise<UserOutputData> {
+): Promise<UserWithoutPassword> {
   const userRepository = new UserRepository();
 
   const validators = new UserValidators(userRepository);
@@ -20,7 +16,6 @@ export async function registerUser(
     throw new NonUniqueEmail();
   }
 
-  const user = new User(payload);
-  const createdUser = await userRepository.create(user);
-  return userOutputSchema.parse(createdUser.data);
+  const createdUser = await userRepository.create(payload);
+  return outputUserSchema.parse(createdUser);
 }

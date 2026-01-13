@@ -1,20 +1,18 @@
 import type { AccountRepositoryInterface } from "@domain/accounts/AccountRepositoryInterface";
-import { Account } from "@domain/accounts/Account";
+import type { Account } from "@domain/accounts/Account";
 import { prisma } from "./client";
 
 export class AccountRepository implements AccountRepositoryInterface {
-
   async findByIdAndOwner(id: number, ownerId: number): Promise<Account | null> {
-    const account = await prisma.account.findUnique({
-      where: { id, ownerId }
+    const account = await prisma.getClient().account.findUnique({
+      where: { id, ownerId },
     });
 
-    if (!account) return null;
-    return new Account(account);
+    return account;
   }
 
   async findManyByOwner(ownerId: number): Promise<Account[] | null> {
-    const accounts = await prisma.account.findMany({
+    const accounts = await prisma.getClient().account.findMany({
       where: { ownerId: ownerId },
     });
 
@@ -22,23 +20,29 @@ export class AccountRepository implements AccountRepositoryInterface {
       return null;
     }
 
-    return accounts.map((account) => new Account(account));
+    return accounts;
   }
 
-  async create(account: Account): Promise<Account> {
-    const saved = await prisma.account.create({
-      data: account.data,
+  async create(
+    account: Omit<Account, "id" | "createdAt" | "updatedAt">,
+  ): Promise<Account> {
+    const saved = await prisma.getClient().account.create({
+      data: account,
     });
 
-    return new Account(saved);
+    return saved;
   }
 
-  async update(account: Account): Promise<Account> {
-    const saved = await prisma.account.update({
-      data: account.data,
-      where: { id: account.data.id }
+  async update(
+    accountId: number,
+    account: Partial<Omit<Account, "id" | "createdAt" | "updatedAt">>,
+  ): Promise<Account> {
+
+    const saved = await prisma.getClient().account.update({
+      data: account,
+      where: { id: accountId },
     });
 
-    return new Account(saved);
+    return saved;
   }
 }

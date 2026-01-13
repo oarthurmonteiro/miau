@@ -1,8 +1,9 @@
 import { NotFoundError } from "@shared/errors";
 import { UserRepository } from "@infraestructure/database/UserRepository";
-import { userOutputSchema, type UserOutputData } from "@domain/users/User";
+import type { UserWithoutPassword } from "@domain/users/User";
+import { outputUserSchema } from "./dtos";
 
-export async function getUserData(id: number): Promise<UserOutputData> {
+export async function getUserData(id: number): Promise<UserWithoutPassword> {
   const userRepository = new UserRepository();
 
   const user = await userRepository.findById(id);
@@ -11,5 +12,5 @@ export async function getUserData(id: number): Promise<UserOutputData> {
     throw new NotFoundError();
   }
 
-  return userOutputSchema.parse(user.data);
+  return outputUserSchema.parse(user);
 }

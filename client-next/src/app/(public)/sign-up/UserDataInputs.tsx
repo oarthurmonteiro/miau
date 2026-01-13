@@ -74,7 +74,7 @@ export function Password() {
                     description: 'text-sm font-bold',
                 }}
                 placeholder="guardamos longe dos zoiudo ;)"
-                description="mas precisams de pelo menos 12 caracteres"
+                description="mas precisamos de pelo menos 12 caracteres"
                 onValueChange={(newPassword) => setPassword(newPassword)}
                 value={password}
                 validate={(password: string) => {

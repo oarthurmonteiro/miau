@@ -1,6 +1,6 @@
-import { baseTransactionSchema } from "@domain/transactions/Transaction";
+import { transactionSchema } from "@domain/transactions/Transaction";
 
-export const createTransactionSchema = baseTransactionSchema.pick({
+export const createTransactionSchema = transactionSchema.pick({
   amount: true,
   accountId: true,
   description: true,

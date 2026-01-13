@@ -2,7 +2,7 @@ import { Model } from "@domain/Model";
 import { Id } from "@shared/types";
 import { z } from "zod";
 
-export const baseSessionSchema = z.object({
+export const sessionSchema = z.object({
   id: Id.readonly(),
   secret: z.string().readonly(),
   createdAt: z.date().readonly(),
@@ -10,16 +10,4 @@ export const baseSessionSchema = z.object({
   userId: Id.readonly(),
 });
 
-const sessionClassSchema = baseSessionSchema.partial({
-  id: true,
-  createdAt: true,
-  secret: true,
-});
-
-export type SessionOutputType = z.infer<typeof baseSessionSchema>;
-
-export class Session extends Model<typeof sessionClassSchema> {
-  constructor(data: z.infer<typeof sessionClassSchema>) {
-    super(sessionClassSchema, data);
-  }
-}
+export type Session = z.infer<typeof sessionSchema>;

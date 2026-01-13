@@ -1,27 +1,34 @@
 import type { z } from "zod";
 import type { createTransactionSchema } from "./dtos";
-import { Transaction, transactionOutputSchema, type TransactionOutputData } from "@domain/transactions/Transaction";
+
 import { TransactionRepository } from "@infraestructure/database/TransactionRepository";
 import type { Account } from "@domain/accounts/Account";
 import { AccountRepository } from "@infraestructure/database/AccountRepository";
+import type { Transaction } from "@domain/transactions/Transaction";
+import { prisma } from "@infraestructure/database/client";
 
 export async function createExpense(
   payload: z.infer<typeof createTransactionSchema>,
   account: Account,
-): Promise<TransactionOutputData> {
-
+): Promise<Transaction> {
   const transactionRepository = new TransactionRepository();
   const accountRepository = new AccountRepository();
 
-  const transaction = new Transaction({
+  const transaction: Omit<
+    Transaction,
+    "id" | "createdAt" | "updatedAt" | "deletedAt"
+  > = {
     ...payload,
-    type: 'expense',
-  });
+    type: "expense",
+  };
 
-  const createdTransaction = await transactionRepository.create(transaction);
+  const [createdTransaction] = await prisma.tx([
+    () => transactionRepository.create(transaction),
+    () => accountRepository.update(account.id, {
+      ...account,
+      currentBalance: account.currentBalance.sub(transaction.amount),
+    }),
+  ]);
 
-  account.data.currentBalance.sub(createdTransaction.data.amount);
-  await accountRepository.update(account);
-
-  return transactionOutputSchema.parse(createdTransaction.data);
+  return createdTransaction;
 }

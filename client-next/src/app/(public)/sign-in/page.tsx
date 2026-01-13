@@ -47,7 +47,7 @@ export default function Page() {
                         labelPlacement="outside"
                         name="password"
                         type="password"
-                        value={"senhamuitogrande"}
+                        value={"arthur@email.com"}
                         placeholder="ex: minha-senha-super-segura"
                     />
 

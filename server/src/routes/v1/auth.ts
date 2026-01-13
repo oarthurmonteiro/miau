@@ -11,23 +11,21 @@ import { unathenticateUser } from "@application/auth/UnauthenticateUserService";
 export const authRouter = new Hono();
 
 authRouter.delete("/sign-out", async (c) => {
-
-  const session = getCookie(c, 'session');
+  const session = getCookie(c, "session");
 
   if (!session) throw new Error();
 
   await unathenticateUser(session);
 
-  deleteCookie(c, 'session');
+  deleteCookie(c, "session");
 
   return c.body(null, HttpStatusCode.NoContent);
-
 });
 
 authRouter.post("/sign-in", zValidator("json", loginSchema), async (c) => {
-  const data = c.req.valid("json");
+  const payload = c.req.valid("json");
 
-  const session = await authenticateUser(data);
+  const session = await authenticateUser(payload.email, payload.password);
 
   setCookie(c, "session", session.secret, {
     path: "/",
@@ -48,10 +46,7 @@ authRouter.post(
 
     await registerUser(payload);
 
-    const session = await authenticateUser({
-      email: payload.email,
-      password: payload.password,
-    });
+    const session = await authenticateUser(payload.email, payload.password);
 
     setCookie(c, "session", session.secret, {
       path: "/",
