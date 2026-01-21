@@ -12,8 +12,7 @@ config :app,
   generators: [timestamp_type: :utc_datetime_usec, binary_id: true]
 
 # Sets the default for migrations
-config :app, App.Repo,
-  migration_primary_key: [name: :id, type: :binary_id]
+config :app, App.Repo, migration_primary_key: [name: :id, type: :binary_id]
 
 # Configures the endpoint
 config :app, AppWeb.Endpoint,

@@ -51,13 +51,20 @@ FROM base AS dev
 
 RUN apt-get update && apt-get install -y inotify-tools
 
+# Set ENV to dev (your base stage sets it to prod)
+ENV MIX_ENV="dev"
+
+# Only copy what is needed for deps
+COPY mix.exs mix.lock ./
 RUN mix deps.get
 
-RUN mix assets.setup
-
+# Now copy the rest of the app
 COPY . .
 
-CMD ["elixir", "--name", "my_condo_dev@127.0.0.1", "--cookie", "devcookie", "-S", "mix", "phx.server"]
+# Important: ensure the assets are ready
+RUN mix assets.setup
+
+CMD ["mix", "phx.server"]
 
 
 FROM base AS builder
