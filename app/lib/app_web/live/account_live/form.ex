@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.AccountLive.Form do
+defmodule AppWeb.AccountLive.Form do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -15,6 +15,7 @@ defmodule AppWeb.Ledger.AccountLive.Form do
 
       <.form for={@form} id="account-form" phx-change="validate" phx-submit="save">
         <.input field={@form[:name]} type="text" label="Name" />
+        <%!-- Bloquear a edição desse campo --%>
         <.input field={@form[:initial_balance]} type="number" label="Initial balance" step="any" />
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Account</.button>
@@ -90,6 +91,6 @@ defmodule AppWeb.Ledger.AccountLive.Form do
     end
   end
 
-  defp return_path("index", _account), do: ~p"/ledger/accounts"
-  defp return_path("show", account), do: ~p"/ledger/accounts/#{account}"
+  defp return_path("index", _account), do: ~p"/accounts"
+  defp return_path("show", account), do: ~p"/accounts/#{account}"
 end

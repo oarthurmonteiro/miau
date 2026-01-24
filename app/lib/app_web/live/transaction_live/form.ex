@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.TransactionLive.Form do
+defmodule AppWeb.TransactionLive.Form do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -25,11 +25,35 @@ defmodule AppWeb.Ledger.TransactionLive.Form do
           options={Ecto.Enum.values(App.Ledger.Transaction, :type)}
         />
         <.input
+          field={@form[:category_id]}
+          type="select"
+          label="Category"
+          options={App.Ledger.list_categories() |> Enum.map(&{&1.name, &1.id})}
+        />
+        <.input
           field={@form[:account_id]}
           type="select"
           label="Account"
-          options={App.Ledger.list_accounts() |> Enum.map(&{&1.name, &1.id})}
+          prompt="Selecione uma conta"
+          options={@accounts |> Enum.map(&{&1.name, &1.id})}
         />
+
+        <%!-- CAMPO CONDICIONAL --%>
+      <%= if @is_credit do %>
+      <div class="grid grid-cols-2 gap-4">
+        <.input
+          field={@form[:total_installments]}
+          label="Nº de Parcelas"
+          type="number"
+          min="1"
+          value="1"
+        />
+        <p class="text-xs text-gray-500 mt-8">
+          A transação será dividida nas próximas faturas.
+        </p>
+      </div>
+      <% end %>
+
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Transaction</.button>
           <.button navigate={return_path(@return_to, @transaction)}>Cancel</.button>
@@ -44,6 +68,8 @@ defmodule AppWeb.Ledger.TransactionLive.Form do
     {:ok,
      socket
      |> assign(:return_to, return_to(params["return_to"]))
+     |> assign(:is_credit, false)
+     |> assign(:accounts, App.Ledger.list_accounts())
      |> apply_action(socket.assigns.live_action, params)}
   end
 
@@ -70,8 +96,26 @@ defmodule AppWeb.Ledger.TransactionLive.Form do
 
   @impl true
   def handle_event("validate", %{"transaction" => transaction_params}, socket) do
-    changeset = Ledger.change_transaction(socket.assigns.transaction, transaction_params)
-    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    # changeset = Ledger.change_transaction(socket.assigns.transaction, transaction_params)
+    # {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    # 1. Pegamos o ID da conta selecionada
+    selected_account_id = transaction_params["account_id"]
+
+    # 2. Verificamos se essa conta é do tipo virtual (Cartão de Crédito)
+    # Você pode buscar na lista de contas que já está no socket
+    is_credit? =
+      case Enum.find(socket.assigns.accounts, &(&1.id == selected_account_id)) do
+        %{type: :credit} -> true
+        _ -> false
+      end
+
+    # 3. Atualizamos o socket com essa informação
+    changeset =
+      socket.assigns.transaction
+      |> App.Ledger.change_transaction(transaction_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, changeset: changeset, is_credit: is_credit?)}
   end
 
   def handle_event("save", %{"transaction" => transaction_params}, socket) do
@@ -93,17 +137,25 @@ defmodule AppWeb.Ledger.TransactionLive.Form do
 
   defp save_transaction(socket, :new, transaction_params) do
     case Ledger.create_transaction(transaction_params) do
-      {:ok, transaction} ->
+      {:ok, %{transaction: transaction, updated_account: _account}} ->
         {:noreply,
          socket
          |> put_flash(:info, "Transaction created successfully")
          |> push_navigate(to: return_path(socket.assigns.return_to, transaction))}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
+      {:error, :transaction, %Ecto.Changeset{} = changeset, _} ->
         {:noreply, assign(socket, form: to_form(changeset))}
+
+      {:error, :account, :account_not_found, _} ->
+        # Erro se a conta sumiu do banco no meio do processo
+        {:noreply, put_flash(socket, :error, "Conta não encontrada")}
+
+      {:error, step, _value, _} ->
+        # Erro genérico em qualquer outro passo
+        {:noreply, put_flash(socket, :error, "Erro no passo #{step}")}
     end
   end
 
-  defp return_path("index", _transaction), do: ~p"/ledger/transactions"
-  defp return_path("show", transaction), do: ~p"/ledger/transactions/#{transaction}"
+  defp return_path("index", _transaction), do: ~p"/transactions"
+  defp return_path("show", transaction), do: ~p"/transactions/#{transaction}"
 end

@@ -3,11 +3,11 @@ defmodule App.Repo.Migrations.CreateAccounts do
 
   def change do
     # 1. Create the ENUM type for PostgreSQL
-    execute "CREATE TYPE account_type AS ENUM ('user', 'virtual')",
+    execute "CREATE TYPE account_type AS ENUM ('debit', 'credit')",
           "DROP TYPE account_type"
 
     create table(:accounts) do
-      add :name, :string, size: 16, null: false
+      add :name, :string, size: 32, null: false
 
       # decimal(10,2) means 10 total digits, 2 after the decimal point
       add :initial_balance, :decimal, precision: 10, scale: 2, default: 0, null: false

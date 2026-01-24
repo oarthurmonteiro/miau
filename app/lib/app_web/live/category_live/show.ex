@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.CategoryLive.Show do
+defmodule AppWeb.CategoryLive.Show do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -11,10 +11,10 @@ defmodule AppWeb.Ledger.CategoryLive.Show do
         Category {@category.id}
         <:subtitle>This is a category record from your database.</:subtitle>
         <:actions>
-          <.button navigate={~p"/ledger/categories"}>
+          <.button navigate={~p"/categories"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/ledger/categories/#{@category}/edit?return_to=show"}>
+          <.button variant="primary" navigate={~p"/categories/#{@category}/edit?return_to=show"}>
             <.icon name="hero-pencil-square" /> Edit category
           </.button>
         </:actions>

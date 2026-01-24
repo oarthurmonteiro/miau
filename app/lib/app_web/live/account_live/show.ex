@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.AccountLive.Show do
+defmodule AppWeb.AccountLive.Show do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -11,10 +11,10 @@ defmodule AppWeb.Ledger.AccountLive.Show do
         Account {@account.id}
         <:subtitle>This is a account record from your database.</:subtitle>
         <:actions>
-          <.button navigate={~p"/ledger/accounts"}>
+          <.button navigate={~p"/accounts"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/ledger/accounts/#{@account}/edit?return_to=show"}>
+          <.button variant="primary" navigate={~p"/accounts/#{@account}/edit?return_to=show"}>
             <.icon name="hero-pencil-square" /> Edit account
           </.button>
         </:actions>

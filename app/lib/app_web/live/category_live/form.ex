@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.CategoryLive.Form do
+defmodule AppWeb.CategoryLive.Form do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -89,6 +89,6 @@ defmodule AppWeb.Ledger.CategoryLive.Form do
     end
   end
 
-  defp return_path("index", _category), do: ~p"/ledger/categories"
-  defp return_path("show", category), do: ~p"/ledger/categories/#{category}"
+  defp return_path("index", _category), do: ~p"/categories"
+  defp return_path("show", category), do: ~p"/categories/#{category}"
 end

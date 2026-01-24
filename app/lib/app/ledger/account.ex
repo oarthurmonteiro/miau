@@ -8,8 +8,9 @@ defmodule App.Ledger.Account do
     field :name, :string
     field :initial_balance, :decimal
     field :current_balance, :decimal
-    field :type, Ecto.Enum, values: [:user, :virtual] # Maps atoms to DB strings
+    field :type, Ecto.Enum, values: [:debit, :credit]
 
+    has_many :invoices, App.Credit.Invoice
     has_many :transactions, App.Ledger.Transaction
     has_many :balance_history, App.Ledger.BalanceHistory
 
@@ -22,7 +23,7 @@ defmodule App.Ledger.Account do
   def changeset(account, attrs) do
     account
     |> cast(attrs, [:name, :initial_balance, :current_balance, :type])
-    |> validate_length(:name, max: 16)
+    |> validate_length(:name, max: 32)
     |> validate_required([:name, :initial_balance])
     |> maybe_sync_current_balance() # Chamada da função auxiliar
   end

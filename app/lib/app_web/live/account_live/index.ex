@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.AccountLive.Index do
+defmodule AppWeb.AccountLive.Index do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -10,7 +10,7 @@ defmodule AppWeb.Ledger.AccountLive.Index do
       <.header>
         Listing Accounts
         <:actions>
-          <.button variant="primary" navigate={~p"/ledger/accounts/new"}>
+          <.button variant="primary" navigate={~p"/accounts/new"}>
             <.icon name="hero-plus" /> New Account
           </.button>
         </:actions>
@@ -19,16 +19,16 @@ defmodule AppWeb.Ledger.AccountLive.Index do
       <.table
         id="accounts"
         rows={@streams.accounts}
-        row_click={fn {_id, account} -> JS.navigate(~p"/ledger/accounts/#{account}") end}
+        row_click={fn {_id, account} -> JS.navigate(~p"/accounts/#{account}") end}
       >
         <:col :let={{_id, account}} label="Name">{account.name}</:col>
         <:col :let={{_id, account}} label="Initial balance">{account.initial_balance}</:col>
         <:col :let={{_id, account}} label="Current balance">{account.current_balance}</:col>
         <:action :let={{_id, account}}>
           <div class="sr-only">
-            <.link navigate={~p"/ledger/accounts/#{account}"}>Show</.link>
+            <.link navigate={~p"/accounts/#{account}"}>Show</.link>
           </div>
-          <.link navigate={~p"/ledger/accounts/#{account}/edit"}>Edit</.link>
+          <.link navigate={~p"/accounts/#{account}/edit"}>Edit</.link>
         </:action>
         <:action :let={{id, account}}>
           <.link

@@ -142,7 +142,7 @@ defmodule App.Ledger do
       {:error, ...}
 
   """
-  def create_account(attrs, type \\ :user) do
+  def create_account(attrs, type \\ :debit) do
     %Account{}
     |> Account.changeset(attrs)
     |> Ecto.Changeset.put_change(:type, type) # Força o tipo independente do que veio no form
@@ -197,6 +197,7 @@ defmodule App.Ledger do
   end
 
   alias App.Ledger.Transaction
+  alias Ecto.Multi
 
   @doc """
   Returns the list of transactions.
@@ -226,7 +227,7 @@ defmodule App.Ledger do
 
   @doc """
   Creates a transaction.
-
+  Cria uma transação e atualiza o saldo da conta de forma atômica.
   ## Examples
 
       iex> create_transaction(%{field: value})
@@ -236,11 +237,32 @@ defmodule App.Ledger do
       {:error, ...}
 
   """
-  def create_transaction(attrs) do
-    %Transaction{}
-    |> Transaction.changeset(attrs)
-    |> Repo.insert()
+  def create_transaction(attrs \\ %{}) do
+    Multi.new()
+    |> Multi.insert(:transaction, Transaction.changeset(%Transaction{}, attrs))
+    |> Multi.run(:account, fn repo, %{transaction: t} ->
+      # Buscamos a conta dentro do Multi para garantir o lock do banco
+      fetch_account(repo, t.account_id)
+    end)
+    |> Multi.update(:updated_account, fn %{transaction: t, account: a} ->
+      # Lógica de cálculo delegada ao Schema ou função privada
+      new_balance = calculate_new_balance(a.current_balance, t.amount, t.type)
+      Account.changeset(a, %{current_balance: new_balance})
+    end)
+    |> Repo.transaction()
   end
+
+  # Funções auxiliares privadas para manter o Multi limpo
+  defp fetch_account(repo, id) do
+    case repo.get(Account, id) do
+      nil -> {:error, :account_not_found}
+      account -> {:ok, account}
+    end
+  end
+
+  defp calculate_new_balance(current, amount, :income), do: Decimal.add(current, amount)
+  defp calculate_new_balance(current, amount, :expense), do: Decimal.sub(current, amount)
+  defp calculate_new_balance(current, _amount, _), do: current
 
   @doc """
   Updates a transaction.

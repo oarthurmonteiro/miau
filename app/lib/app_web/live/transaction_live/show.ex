@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.TransactionLive.Show do
+defmodule AppWeb.TransactionLive.Show do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -11,10 +11,10 @@ defmodule AppWeb.Ledger.TransactionLive.Show do
         Transaction {@transaction.id}
         <:subtitle>This is a transaction record from your database.</:subtitle>
         <:actions>
-          <.button navigate={~p"/ledger/transactions"}>
+          <.button navigate={~p"/transactions"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/ledger/transactions/#{@transaction}/edit?return_to=show"}>
+          <.button variant="primary" navigate={~p"/transactions/#{@transaction}/edit?return_to=show"}>
             <.icon name="hero-pencil-square" /> Edit transaction
           </.button>
         </:actions>

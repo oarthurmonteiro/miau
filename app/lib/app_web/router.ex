@@ -18,26 +18,44 @@ defmodule AppWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-  end
 
-  scope "/ledger", AppWeb.Ledger do
-      pipe_through :browser
+    scope "/categories", CategoryLive do
 
-      live "/categories", CategoryLive.Index, :index
-      live "/categories/new", CategoryLive.Form, :new
-      live "/categories/:id", CategoryLive.Show, :show
-      live "/categories/:id/edit", CategoryLive.Form, :edit
+      live "/", Index, :index
+      live "/new", Form, :new
+      live "/:id", Show, :show
+      live "/:id/edit", Form, :edit
 
-      live "/accounts", AccountLive.Index, :index
-      live "/accounts/new", AccountLive.Form, :new
-      live "/accounts/:id", AccountLive.Show, :show
-      live "/accounts/:id/edit", AccountLive.Form, :edit
-
-      live "/transactions", TransactionLive.Index, :index
-      live "/transactions/new", TransactionLive.Form, :new
-      live "/transactions/:id", TransactionLive.Show, :show
-      live "/transactions/:id/edit", TransactionLive.Form, :edit
     end
+
+    scope "/accounts", AccountLive do
+
+      live "/", Index, :index
+      live "/new", Form, :new
+      live "/:id", Show, :show
+      live "/:id/edit", Form, :edit
+
+    end
+
+    scope "/credit_cards", CreditCardLive do
+
+      live "/", Index, :index
+      live "/new", Form, :new
+      live "/:id", Show, :show
+      live "/:id/edit", Form, :edit
+
+    end
+
+    scope "/transactions", TransactionLive do
+
+      live "/", Index, :index
+      live "/new", Form, :new
+      live "/:id", Show, :show
+      live "/:id/edit", Form, :edit
+
+    end
+
+  end
 
   # Other scopes may use custom stacks.
   # scope "/api", AppWeb do

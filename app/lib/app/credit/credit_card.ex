@@ -5,12 +5,9 @@ defmodule App.Credit.CreditCard do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "credit_cards" do
-    field :name, :string
     field :limit, :decimal
     field :due_day, :integer
-
-    has_many :invoices, App.Credit.Invoice
-    has_many :credit_card_transactions, App.Credit.CreditCardTransaction
+    field :closing_day_offset, :integer
 
     belongs_to :account, App.Ledger.Account
 
@@ -20,8 +17,10 @@ defmodule App.Credit.CreditCard do
   @doc false
   def changeset(credit_card, attrs) do
     credit_card
-    |> cast(attrs, [:name, :limit, :due_day, :account_id, :user_id])
-    |> validate_required([:name, :limit, :due_day, :account_id, :user_id])
+    |> cast(attrs, [:limit, :due_day, :account_id, :closing_day_offset])
+    |> validate_required([:limit, :due_day, :account_id, :closing_day_offset])
+    |> validate_number(:due_day, [greater_than_or_equal_to: 1, less_than_or_equal_to: 31])
+    |> validate_number(:closing_day_offset, [greater_than_or_equal_to: 1, less_than_or_equal_to: 15])
     |> unique_constraint(:account_id) # Garante que uma conta não tenha dois cartões
   end
 end

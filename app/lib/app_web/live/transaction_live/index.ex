@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.TransactionLive.Index do
+defmodule AppWeb.TransactionLive.Index do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -10,7 +10,7 @@ defmodule AppWeb.Ledger.TransactionLive.Index do
       <.header>
         Listing Transactions
         <:actions>
-          <.button variant="primary" navigate={~p"/ledger/transactions/new"}>
+          <.button variant="primary" navigate={~p"/transactions/new"}>
             <.icon name="hero-plus" /> New Transaction
           </.button>
         </:actions>
@@ -19,7 +19,7 @@ defmodule AppWeb.Ledger.TransactionLive.Index do
       <.table
         id="transactions"
         rows={@streams.transactions}
-        row_click={fn {_id, transaction} -> JS.navigate(~p"/ledger/transactions/#{transaction}") end}
+        row_click={fn {_id, transaction} -> JS.navigate(~p"/transactions/#{transaction}") end}
       >
         <:col :let={{_id, transaction}} label="Description">{transaction.description}</:col>
         <:col :let={{_id, transaction}} label="Amount">{transaction.amount}</:col>
@@ -27,9 +27,9 @@ defmodule AppWeb.Ledger.TransactionLive.Index do
         <:col :let={{_id, transaction}} label="Type">{transaction.type}</:col>
         <:action :let={{_id, transaction}}>
           <div class="sr-only">
-            <.link navigate={~p"/ledger/transactions/#{transaction}"}>Show</.link>
+            <.link navigate={~p"/transactions/#{transaction}"}>Show</.link>
           </div>
-          <.link navigate={~p"/ledger/transactions/#{transaction}/edit"}>Edit</.link>
+          <.link navigate={~p"/transactions/#{transaction}/edit"}>Edit</.link>
         </:action>
         <:action :let={{id, transaction}}>
           <.link

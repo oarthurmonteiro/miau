@@ -8,7 +8,7 @@ defmodule App.Repo.Migrations.CreateInvoices do
 
     create table(:invoices) do
 
-      add :credit_card_id, references(:credit_cards, on_delete: :nothing), null: false
+      add :account_id, references(:accounts, on_delete: :nothing), null: false
 
       add :start_date, :date, null: false
       add :end_date, :date, null: false

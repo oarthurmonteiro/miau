@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.CategoryLive.Index do
+defmodule AppWeb.CategoryLive.Index do
   use AppWeb, :live_view
 
   alias App.Ledger
@@ -10,7 +10,7 @@ defmodule AppWeb.Ledger.CategoryLive.Index do
       <.header>
         Listing Categories
         <:actions>
-          <.button variant="primary" navigate={~p"/ledger/categories/new"}>
+          <.button variant="primary" navigate={~p"/categories/new"}>
             <.icon name="hero-plus" /> New Category
           </.button>
         </:actions>
@@ -19,14 +19,14 @@ defmodule AppWeb.Ledger.CategoryLive.Index do
       <.table
         id="categories"
         rows={@streams.categories}
-        row_click={fn {_id, category} -> JS.navigate(~p"/ledger/categories/#{category}") end}
+        row_click={fn {_id, category} -> JS.navigate(~p"/categories/#{category}") end}
       >
         <:col :let={{_id, category}} label="Name">{category.name}</:col>
         <:action :let={{_id, category}}>
           <div class="sr-only">
-            <.link navigate={~p"/ledger/categories/#{category}"}>Show</.link>
+            <.link navigate={~p"/categories/#{category}"}>Show</.link>
           </div>
-          <.link navigate={~p"/ledger/categories/#{category}/edit"}>Edit</.link>
+          <.link navigate={~p"/categories/#{category}/edit"}>Edit</.link>
         </:action>
         <:action :let={{id, category}}>
           <.link
