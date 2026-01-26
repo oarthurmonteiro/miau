@@ -13,12 +13,7 @@ defmodule App.Repo.Migrations.CreateTransactions do
       add :type, :transaction_type, null: false
       add :occurred_at, :date, null: false
       add :description, :string, null: false
-
-      # Controle de Parcelamento
-      add :total_installments, :smallint, default: 1
-      add :installment_number, :smallint
-      add :parent_transaction_id, references(:transactions, on_delete: :nothing)
-
+    
       timestamps(type: :utc_datetime_usec)
     end
   end

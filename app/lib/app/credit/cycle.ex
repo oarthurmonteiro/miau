@@ -23,23 +23,4 @@ defmodule App.Credit.Cycle do
 
   defp previous_due_date(due_date),
     do: Date.shift(due_date, month: -1)
-
-  def ensure_invoice(repo, card, reference_date) do
-    cycle = calculate(reference_date, card)
-
-    repo.get_by(Invoice,
-      account_id: card.account_id,
-      start_date: cycle.start_date,
-      end_date: cycle.end_date
-    ) ||
-      repo.insert!(
-        Invoice.changeset(
-          %Invoice{},
-          Map.merge(cycle, %{
-            account_id: card.account_id,
-            status: :open
-          })
-        )
-      )
-  end
 end

@@ -13,6 +13,8 @@ defmodule App.Ledger.Transaction do
     belongs_to(:account, App.Portfolio.Account)
     belongs_to(:category, App.Ledger.Category)
 
+    has_one(:credit_metadata, App.Ledger.CreditMetadata)
+
     timestamps(type: :utc_datetime_usec)
   end
 

@@ -70,9 +70,7 @@ defmodule App.Credit do
 
   defp create_initial_invoice(multi) do
     Multi.insert(multi, :invoice, fn %{card: card} ->
-      card
-      |> generate_invoice_data()
-      |> Invoice.changeset()
+      Invoice.changeset(%Invoice{}, generate_invoice_data(card))
     end)
   end
 
@@ -91,7 +89,7 @@ defmodule App.Credit do
     |> Cycle.from_due_date(card.closing_day_offset)
     |> maybe_shift_cycle(reference_date, card)
     |> Map.merge(%{
-      account_id: card.account_id,
+      credit_card_id: card.id,
       status: :open,
       total_amount: 0,
       amount_paid: 0,
@@ -123,30 +121,33 @@ defmodule App.Credit do
     |> Cycle.from_due_date(card.closing_day_offset)
   end
 
-  def maybe_attach_transaction(repo, transaction, account, attrs) do
-    case account.type do
-      :credit -> attach_credit_transaction(repo, transaction, account, attrs)
-      _ -> {:ok, nil}
+  def update_invoice_debt_amount(repo, invoice, amount) do
+    new_total = Decimal.add(invoice.total_amount || 0, amount)
+
+    invoice
+    |> Invoice.changeset(%{total_amount: new_total, remaining_balance: new_total})
+    |> repo.update()
+  end
+
+  def get_or_create_invoice_for_card(repo, credit_card, reference_date) do
+    case get_invoice_for_card_by_date(repo, credit_card.id, reference_date) do
+      nil ->
+        %Invoice{}
+        |> Invoice.changeset(generate_invoice_data(credit_card, reference_date))
+        |> repo.insert()
+
+      invoice ->
+        {:ok, invoice}
     end
   end
 
-  def attach_credit_transaction(repo, transaction, account, attrs) do
-    card = account.credit_card
-
-    invoice =
-      transaction.occurred_at
-      |> Date.from_naive!()
-      |> Invoice.Cycle.ensure_invoice(repo, card)
-
-    metadata_attrs =
-      attrs
-      |> Map.get("credit_metadata", %{})
-      |> Map.merge(%{
-        "transaction_id" => transaction.id,
-        "invoice_id" => invoice.id
-      })
-
-    repo.insert(CreditMetadata.changeset(%CreditMetadata{}, metadata_attrs))
+  def get_invoice_for_card_by_date(repo, credit_card_id, date) do
+    Invoice
+    |> where([i], i.credit_card_id == ^credit_card_id)
+    |> where([i], i.start_date <= ^date and i.end_date >= ^date)
+    |> order_by([i], asc: i.end_date)
+    |> limit(1)
+    |> repo.one()
   end
 
   @doc """

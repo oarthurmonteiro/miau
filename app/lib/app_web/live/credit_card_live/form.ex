@@ -96,7 +96,8 @@ defmodule AppWeb.CreditCardLive.Form do
         {:noreply, assign(socket, form: to_form(changeset))}
 
       # Erro na Fatura
-      {:error, :invoice, _changeset, _} ->
+      {:error, :invoice, changeset, _} ->
+        IO.inspect(changeset)
         {:noreply, put_flash(socket, :error, "Erro ao gerar fatura inicial")}
 
       {:error, step, value, _} ->

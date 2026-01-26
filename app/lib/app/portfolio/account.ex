@@ -24,6 +24,7 @@ defmodule App.Portfolio.Account do
     |> cast(attrs, [:name, :initial_balance, :current_balance, :type])
     |> validate_length(:name, max: 32)
     |> validate_required([:name, :initial_balance])
+    |> unique_constraint([:name, :type])
     # Chamada da função auxiliar
     |> maybe_sync_current_balance()
   end

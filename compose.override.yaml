@@ -4,6 +4,8 @@ services:
       context: ./app
       dockerfile: Dockerfile
       target: dev
+    tty: true
+    stdin_open: true
     develop:
       watch:
         - action: sync
@@ -13,8 +15,14 @@ services:
           ignore:
             - /priv/assets/node_modules
             - .git
+
+        - action: sync+restart
+          path: ./app/lib/app
+          target: /app/lib/app
+          
         - action: rebuild
           path: ./app/mix.exs
+
         - action: rebuild
           path: ./app/Dockerfile
     ports:

@@ -5,13 +5,12 @@ defmodule App.Ledger.CreditMetadata do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "credit_metadata" do
+    field(:total_installments, :integer)
+    field(:installment_number, :integer)
 
-    field :total_installments, :integer
-    field :installment_number, :integer
-
-    field :parent_transaction_id, :binary_id
-    field :transaction_id, :binary_id
-    field :invoice_id, :binary_id
+    belongs_to(:parent_transaction, App.Ledger.Transaction)
+    belongs_to(:transaction, App.Ledger.Transaction)
+    belongs_to(:invoice, App.Credit.Invoice)
 
     timestamps(type: :utc_datetime_usec)
   end
@@ -19,7 +18,13 @@ defmodule App.Ledger.CreditMetadata do
   @doc false
   def changeset(credit_metadata, attrs) do
     credit_metadata
-    |> cast(attrs, [:total_installments, :installment_number])
-    |> validate_required([:total_installments, :installment_number])
+    |> cast(attrs, [
+      :total_installments,
+      :installment_number,
+      :parent_transaction_id,
+      :transaction_id,
+      :invoice_id
+    ])
+    |> validate_required([:total_installments, :installment_number, :transaction_id, :invoice_id])
   end
 end

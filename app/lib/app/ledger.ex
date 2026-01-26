@@ -104,7 +104,6 @@ defmodule App.Ledger do
 
   alias App.Ledger.Transaction
   alias App.Ledger.CreditMetadata
-  alias App.Portfolio.Account
   alias Ecto.Multi
 
   @doc """
@@ -145,136 +144,109 @@ defmodule App.Ledger do
       {:error, ...}
 
   """
+  def create_transaction(attrs) do
+    input = normalize_transaction_input(attrs)
 
-  def create_transaction(attrs \\ %{}) do
-    Multi.new()
-    |> Multi.insert(:transaction, Transaction.changeset(%Transaction{}, attrs))
-    |> Multi.run(:account, fn repo, %{transaction: t} ->
-      # Buscamos a conta dentro do Multi para garantir o lock do banco
-      fetch_account(repo, t.account_id)
-    end)
-    |> Multi.run(:credit_metadata, fn repo, %{transaction: t, account: a} ->
-      Credit.maybe_attach_transaction(repo, t, a, attrs)
-    end)
-    |> Multi.update(:updated_account, fn %{transaction: t, account: a} ->
-      # Lógica de cálculo delegada ao Schema ou função privada
-      new_balance = calculate_new_balance(a.current_balance, t.amount, t.type)
-      Account.changeset(a, %{current_balance: new_balance})
-    end)
-    |> Repo.transaction()
-  end
-
-  # Funções auxiliares privadas para manter o Multi limpo
-  defp fetch_account(repo, id) do
-    case repo.get(Account, id) |> repo.preload(:credit_card) do
-      nil -> {:error, :account_not_found}
-      account -> {:ok, account}
+    if input.total_installments > 1 do
+      create_installment_transaction(input)
+    else
+      create_single_transaction(input)
     end
   end
 
-  # Se a conta for do tipo :credit, injetamos o Multi.insert
-  defp maybe_insert_transaction_metadata(multi, attrs) do
-    multi
-    |> Multi.run(:metadata, fn repo, %{transaction: t, account: a} ->
-      case a.type do
-        :credit ->
-          # Aqui você chamaria seu ensure_invoice_exists
-          invoice = ensure_invoice_exists(repo, a, t.occurred_at)
-
-          metadata_attrs =
-            attrs
-            |> Map.get("credit_metadata", %{})
-            |> Map.merge(%{
-              "transaction_id" => t.id,
-              "invoice_id" => invoice.id
-            })
-
-          repo.insert(CreditMetadata.changeset(%CreditMetadata{}, metadata_attrs))
-
-        _other_type ->
-          # Se for débito/dinheiro, não faz nada e retorna OK
-          {:ok, nil}
-      end
-    end)
+  def normalize_transaction_input(attrs) do
+    %{
+      account_id: attrs["account_id"],
+      amount: Decimal.new(attrs["amount"]),
+      occurred_at: Date.from_iso8601!(attrs["occurred_at"]),
+      type: String.to_existing_atom(attrs["type"]),
+      category_id: attrs["category_id"],
+      description: attrs["description"],
+      total_installments:
+        attrs["total_installments"]
+        |> then(&(&1 || "1"))
+        |> String.to_integer()
+    }
   end
 
-  defp get_invoice_by_date(repo, credit_card_id, date) do
-    App.Credit.Invoice
-    |> where([i], i.credit_card_id == ^credit_card_id)
-    # "Aonde a fatura termina depois da data X"
-    |> where([i], i.end_date >= ^date)
-    # Pega a mais próxima do futuro
-    |> order_by([i], asc: i.end_date)
-    # Garante que só vem uma
-    |> limit(1)
-    # Executa a query
-    |> repo.one()
+  defp create_single_transaction(_attrs) do
+    raise "TODO"
   end
 
-  def create_installment_purchase(attrs \\ %{}) do
-    total_installments = String.to_integer(attrs["total_installments"] || "1")
-
+  defp create_installment_transaction(attrs) do
     Multi.new()
-    # 1. Buscamos a conta primeiro para validar se é crédito
     |> Multi.run(:account, fn repo, _ ->
-      case repo.get(Account, attrs["account_id"]) |> repo.preload(:credit_card) do
-        %Account{type: :credit} = a -> {:ok, a}
-        _ -> {:error, :not_a_credit_account}
-      end
+      App.Portfolio.fetch_account_with_credit(repo, attrs[:account_id])
     end)
-    # 2. Geramos as N parcelas dinamicamente
-    |> insert_installments(attrs, total_installments)
-    # 3. Atualizamos o saldo da conta (valor total da compra)
-    |> Multi.update(:updated_account, fn %{account: a} ->
-      new_balance = Decimal.add(a.current_balance, attrs["amount"])
-      Account.changeset(a, %{current_balance: new_balance})
+    |> Multi.run(:plan, fn _repo, _ ->
+      {:ok, App.Credit.Installment.build_plan(attrs)}
+    end)
+    |> Multi.merge(fn %{plan: plan, account: a} ->
+      insert_installments_multi(plan, a, attrs)
+    end)
+    |> Multi.run(:balance, fn repo, %{account: a} ->
+      new_balance = a.current_balance |> Decimal.add(attrs[:amount])
+
+      App.Portfolio.update_account_balance(repo, a, new_balance)
     end)
     |> Repo.transaction()
   end
 
-  # --- Helpers para gerar as parcelas ---
+  defp insert_installments_multi(plan, account, attrs) do
+    Enum.reduce(plan.installments, Multi.new(), fn inst, multi ->
+      tx_key = {:tx, inst.installment_number}
+      invoice_key = {:invoice, inst.installment_number}
+      meta_key = {:metadata, inst.installment_number}
 
-  defp insert_installments(multi, attrs, total) do
-    # Convertemos a data uma única vez fora do loop para performance
-    base_date = Date.from_iso8601!(attrs["occurred_at"])
+      multi
+      |> Multi.insert(tx_key, fn _ ->
+        Transaction.changeset(
+          %Transaction{},
+          attrs
+          |> Map.merge(%{
+            amount: inst.amount,
+            occurred_at: inst.occurred_at,
+            type: :expense,
 
-    Enum.reduce(1..total, multi, fn i, acc_multi ->
-      t_key = String.to_atom("t_#{i}")
-      m_key = String.to_atom("m_#{i}")
-
-      # Calculamos o deslocamento: Parcela 1 = +0 meses, Parcela 2 = +1 mês...
-      installment_date = Date.shift(base_date, month: i - 1)
-
-      acc_multi
-      |> Multi.insert(t_key, fn _ ->
-        Transaction.changeset(%Transaction{}, %{attrs | "occurred_at" => installment_date})
+          })
+        )
       end)
-      # 'results' contém todas as operações anteriores
-      |> Multi.run(m_key, fn repo, results ->
-        t = Map.fetch!(results, t_key)
-        a = Map.fetch!(results, :account)
+      |> Multi.run(invoice_key, fn repo, results ->
+        tx = results[tx_key]
 
-        # Buscamos o ID da primeira parcela para ser o pai (parent)
-        parent_id = if i > 1, do: Map.fetch!(results, :t_1).id, else: nil
+        with {:ok, invoice} <-
+               App.Credit.get_or_create_invoice_for_card(
+                 repo,
+                 account.credit_card,
+                 tx.occurred_at
+               ),
+             {:ok, updated_invoice} <-
+               App.Credit.update_invoice_debt_amount(repo, invoice, tx.amount) do
+          {:ok, updated_invoice}
+        else
+          {:error, reason} -> {:error, reason}
+        end
+      end)
+      |> Multi.run(meta_key, fn repo, results ->
+        tx = results[tx_key]
+        invoice = results[invoice_key]
 
-        invoice = ensure_invoice_exists(repo, a, installment_date)
-
-        metadata_attrs = %{
-          "transaction_id" => t.id,
-          "invoice_id" => invoice.id,
-          "installment_number" => i,
-          "total_installments" => total,
-          "parent_transaction_id" => parent_id
-        }
-
-        repo.insert(CreditMetadata.changeset(%CreditMetadata{}, metadata_attrs))
+        CreditMetadata.changeset(%CreditMetadata{}, %{
+          installment_number: inst.installment_number,
+          total_installments: inst.total_installments,
+          transaction_id: tx.id,
+          invoice_id: invoice.id,
+          parent_transaction_id:
+            if inst.installment_number == 1 do
+              nil
+            else
+              results[{:tx, 1}].id
+            end
+        })
+        |> repo.insert()
       end)
     end)
   end
-
-  defp calculate_new_balance(current, amount, :income), do: Decimal.add(current, amount)
-  defp calculate_new_balance(current, amount, :expense), do: Decimal.sub(current, amount)
-  defp calculate_new_balance(current, _amount, _), do: current
 
   @doc """
   Updates a transaction.

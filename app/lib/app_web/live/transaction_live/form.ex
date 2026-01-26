@@ -66,7 +66,6 @@ defmodule AppWeb.TransactionLive.Form do
   @impl true
   def mount(params, _session, socket) do
     {:ok,
-
      socket
      |> assign(:return_to, return_to(params["return_to"]))
      |> assign(:accounts, App.Portfolio.list_accounts())
@@ -140,14 +139,7 @@ defmodule AppWeb.TransactionLive.Form do
   end
 
   defp save_transaction(socket, :new, transaction_params) do
-    result =
-      if transaction_params["total_installments"] > 1 do
-        Ledger.create_installment_purchase(transaction_params)
-      else
-        Ledger.create_transaction(transaction_params)
-      end
-
-    case result do
+    case Ledger.create_transaction(transaction_params) do
       {:ok, %{transaction: transaction}} ->
         {:noreply,
          socket
