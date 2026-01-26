@@ -1,8 +1,8 @@
 defmodule AppWeb.AccountLive.Form do
   use AppWeb, :live_view
 
-  alias App.Ledger
-  alias App.Ledger.Account
+  alias App.Portfolio
+  alias App.Portfolio.Account
 
   @impl true
   def render(assigns) do
@@ -38,12 +38,12 @@ defmodule AppWeb.AccountLive.Form do
   defp return_to(_), do: "index"
 
   defp apply_action(socket, :edit, %{"id" => id}) do
-    account = Ledger.get_account!(id)
+    account = Portfolio.get_account!(id)
 
     socket
     |> assign(:page_title, "Edit Account")
     |> assign(:account, account)
-    |> assign(:form, to_form(Ledger.change_account(account)))
+    |> assign(:form, to_form(Portfolio.change_account(account)))
   end
 
   defp apply_action(socket, :new, _params) do
@@ -52,12 +52,12 @@ defmodule AppWeb.AccountLive.Form do
     socket
     |> assign(:page_title, "New Account")
     |> assign(:account, account)
-    |> assign(:form, to_form(Ledger.change_account(account)))
+    |> assign(:form, to_form(Portfolio.change_account(account)))
   end
 
   @impl true
   def handle_event("validate", %{"account" => account_params}, socket) do
-    changeset = Ledger.change_account(socket.assigns.account, account_params)
+    changeset = Portfolio.change_account(socket.assigns.account, account_params)
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -66,7 +66,7 @@ defmodule AppWeb.AccountLive.Form do
   end
 
   defp save_account(socket, :edit, account_params) do
-    case Ledger.update_account(socket.assigns.account, account_params) do
+    case Portfolio.update_account(socket.assigns.account, account_params) do
       {:ok, account} ->
         {:noreply,
          socket
@@ -79,7 +79,7 @@ defmodule AppWeb.AccountLive.Form do
   end
 
   defp save_account(socket, :new, account_params) do
-    case Ledger.create_account(account_params) do
+    case Portfolio.create_account(account_params) do
       {:ok, account} ->
         {:noreply,
          socket

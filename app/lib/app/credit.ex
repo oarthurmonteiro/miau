@@ -7,8 +7,8 @@ defmodule App.Credit do
   alias App.Repo
   alias Ecto.Multi
 
-  alias App.Credit.{CreditCard, Invoice}
-  alias App.Ledger.Account
+  alias App.Credit.{CreditCard, Invoice, Cycle}
+  alias App.Portfolio.Account
 
   @doc """
   Returns the list of credit_cards.
@@ -50,71 +50,103 @@ defmodule App.Credit do
   """
   def create_credit_card(attrs) do
     Multi.new()
-    # 1. Cria a Conta Virtual primeiro
-    |> Multi.insert(:account, fn _changes ->
-      Account.changeset(%Account{}, %{
-        name: "#{attrs["name"] || attrs[:name]}",
-        type: :credit,
-        initial_balance: 0,
-        current_balance: 0
-      })
-    end)
-    # 2. Cria o Cartão usando o ID da conta gerada acima
-    |> Multi.insert(:card, fn %{account: account} ->
-      attrs_with_account = Map.put(attrs, "account_id", account.id)
-      CreditCard.changeset(%CreditCard{}, attrs_with_account)
-    end)
-    # 3. Cria a Fatura usando os dados do cartão gerado acima
-    |> Multi.run(:invoice, fn repo, %{card: card} ->
-      step_insert_invoice(repo, card)
-    end)
+    |> create_virtual_account(attrs)
+    |> create_card(attrs)
+    |> create_initial_invoice()
     |> Repo.transaction()
   end
 
-  defp step_insert_invoice(repo, card, reference_date \\ Date.utc_today()) do
-    # O contexto sabe 'o que' fazer (buscar datas e inserir)
-    # O schema sabe 'como' calcular essas datas
+  defp create_virtual_account(multi, attrs) do
+    Multi.insert(multi, :account, build_credit_account_changeset(attrs))
+  end
 
-    # Se hoje for dia 21/01 e o fechamento deste mês foi dia 01/01,
-    # precisamos gerar a fatura que vence em Fevereiro (mês 2).
+  defp create_card(multi, attrs) do
+    Multi.insert(multi, :card, fn %{account: account} ->
+      account
+      |> Ecto.build_assoc(:credit_card)
+      |> CreditCard.changeset(attrs)
+    end)
+  end
 
-    # Lógica simples: Se hoje > data de fechamento calculada para este mês,
-    # pule para o próximo mês.
+  defp create_initial_invoice(multi) do
+    Multi.insert(multi, :invoice, fn %{card: card} ->
+      card
+      |> generate_invoice_data()
+      |> Invoice.changeset()
+    end)
+  end
 
-    dates =
-      Invoice.calculate_dates(
-        card.due_day,
-        reference_date.month,
-        reference_date.year,
-        card.closing_day_offset
-      )
+  defp build_credit_account_changeset(attrs) do
+    Account.changeset(%Account{}, %{
+      name: Map.get(attrs, "name") || Map.get(attrs, :name),
+      type: :credit,
+      initial_balance: 0,
+      current_balance: 0
+    })
+  end
 
-    dates =
-      if Date.compare(reference_date, dates.end_date) == :gt do
-        # Pula para o próximo ciclo de vencimento
-        next_month = Date.shift(reference_date, month: 1)
+  def generate_invoice_data(card, reference_date \\ Date.utc_today()) do
+    reference_date
+    |> due_date_for(card)
+    |> Cycle.from_due_date(card.closing_day_offset)
+    |> maybe_shift_cycle(reference_date, card)
+    |> Map.merge(%{
+      account_id: card.account_id,
+      status: :open,
+      total_amount: 0,
+      amount_paid: 0,
+      remaining_balance: 0
+    })
+  end
 
-        Invoice.calculate_dates(
-          card.due_day,
-          next_month.month,
-          next_month.year,
-          card.closing_day_offset
-        )
-      else
-        dates
-      end
+  defp due_date_for(reference_date, card) do
+    Date.new!(reference_date.year, reference_date.month, card.due_day)
+  end
 
-    attrs =
+  defp maybe_shift_cycle(dates, reference_date, card) do
+    if after_closing?(reference_date, dates) do
+      next_cycle(reference_date, card)
+    else
       dates
-      |> Map.put(:credit_card_id, card.id)
-      |> Map.put(:status, :open)
-      |> Map.put(:total_amount, 0)
-      |> Map.put(:amount_paid, 0)
-      |> Map.put(:remaining_balance, 0)
+    end
+  end
 
-    %Invoice{}
-    |> Invoice.changeset(attrs)
-    |> repo.insert()
+  defp after_closing?(reference_date, %{end_date: end_date}) do
+    Date.after?(reference_date, end_date)
+  end
+
+  defp next_cycle(reference_date, card) do
+    reference_date
+    |> Date.shift(month: 1)
+    |> Date.beginning_of_month()
+    |> Date.add(card.due_day - 1)
+    |> Cycle.from_due_date(card.closing_day_offset)
+  end
+
+  def maybe_attach_transaction(repo, transaction, account, attrs) do
+    case account.type do
+      :credit -> attach_credit_transaction(repo, transaction, account, attrs)
+      _ -> {:ok, nil}
+    end
+  end
+
+  def attach_credit_transaction(repo, transaction, account, attrs) do
+    card = account.credit_card
+
+    invoice =
+      transaction.occurred_at
+      |> Date.from_naive!()
+      |> Invoice.Cycle.ensure_invoice(repo, card)
+
+    metadata_attrs =
+      attrs
+      |> Map.get("credit_metadata", %{})
+      |> Map.merge(%{
+        "transaction_id" => transaction.id,
+        "invoice_id" => invoice.id
+      })
+
+    repo.insert(CreditMetadata.changeset(%CreditMetadata{}, metadata_attrs))
   end
 
   @doc """

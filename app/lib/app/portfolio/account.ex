@@ -1,20 +1,19 @@
-defmodule App.Ledger.Account do
+defmodule App.Portfolio.Account do
   use Ecto.Schema
   import Ecto.Changeset
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "accounts" do
-    field :name, :string
-    field :initial_balance, :decimal
-    field :current_balance, :decimal
-    field :type, Ecto.Enum, values: [:debit, :credit]
+    field(:name, :string)
+    field(:initial_balance, :decimal)
+    field(:current_balance, :decimal)
+    field(:type, Ecto.Enum, values: [:debit, :credit])
 
-    has_many :invoices, App.Credit.Invoice
-    has_many :transactions, App.Ledger.Transaction
-    has_many :balance_history, App.Ledger.BalanceHistory
+    has_many(:transactions, App.Ledger.Transaction)
+    has_many(:balance_history, App.Portfolio.BalanceHistory)
 
-    has_one :credit_card, App.Credit.CreditCard
+    has_one(:credit_card, App.Credit.CreditCard)
 
     timestamps(type: :utc_datetime)
   end
@@ -25,7 +24,8 @@ defmodule App.Ledger.Account do
     |> cast(attrs, [:name, :initial_balance, :current_balance, :type])
     |> validate_length(:name, max: 32)
     |> validate_required([:name, :initial_balance])
-    |> maybe_sync_current_balance() # Chamada da função auxiliar
+    # Chamada da função auxiliar
+    |> maybe_sync_current_balance()
   end
 
   defp maybe_sync_current_balance(%{data: %{id: nil}} = changeset) do

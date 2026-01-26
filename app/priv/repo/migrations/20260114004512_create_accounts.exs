@@ -17,6 +17,9 @@ defmodule App.Repo.Migrations.CreateAccounts do
       add :type, :account_type, null: false
 
       timestamps(type: :utc_datetime)
+
     end
+
+    create unique_index(:accounts, [:name, :type], name: :unique_name_and_type_index)
   end
 end

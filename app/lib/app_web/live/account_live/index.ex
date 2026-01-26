@@ -1,7 +1,7 @@
 defmodule AppWeb.AccountLive.Index do
   use AppWeb, :live_view
 
-  alias App.Ledger
+  alias App.Portfolio
 
   @impl true
   def render(assigns) do
@@ -53,13 +53,13 @@ defmodule AppWeb.AccountLive.Index do
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    account = Ledger.get_account!(id)
-    {:ok, _} = Ledger.delete_account(account)
+    account = Portfolio.get_account!(id)
+    {:ok, _} = Portfolio.delete_account(account)
 
     {:noreply, stream_delete(socket, :accounts, account)}
   end
 
   defp list_accounts() do
-    Ledger.list_accounts()
+    Portfolio.list_accounts()
   end
 end

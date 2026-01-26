@@ -55,6 +55,11 @@ defmodule AppWeb.Router do
 
     end
 
+    live "/credit_metadata", CreditMetadataLive.Index, :index
+    live "/credit_metadata/new", CreditMetadataLive.Form, :new
+    live "/credit_metadata/:id", CreditMetadataLive.Show, :show
+    live "/credit_metadata/:id/edit", CreditMetadataLive.Form, :edit
+
   end
 
   # Other scopes may use custom stacks.

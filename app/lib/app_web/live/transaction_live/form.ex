@@ -66,10 +66,10 @@ defmodule AppWeb.TransactionLive.Form do
   @impl true
   def mount(params, _session, socket) do
     {:ok,
+
      socket
      |> assign(:return_to, return_to(params["return_to"]))
-     |> assign(:is_credit, false)
-     |> assign(:accounts, App.Ledger.list_accounts())
+     |> assign(:accounts, App.Portfolio.list_accounts())
      |> apply_action(socket.assigns.live_action, params)}
   end
 
@@ -79,9 +79,12 @@ defmodule AppWeb.TransactionLive.Form do
   defp apply_action(socket, :edit, %{"id" => id}) do
     transaction = Ledger.get_transaction!(id)
 
+    is_credit? = App.Portfolio.get_account!(transaction.account_id).type == :credit
+
     socket
     |> assign(:page_title, "Edit Transaction")
     |> assign(:transaction, transaction)
+    |> assign(:is_credit, is_credit?)
     |> assign(:form, to_form(Ledger.change_transaction(transaction)))
   end
 
@@ -91,6 +94,7 @@ defmodule AppWeb.TransactionLive.Form do
     socket
     |> assign(:page_title, "New Transaction")
     |> assign(:transaction, transaction)
+    |> assign(:is_credit, false)
     |> assign(:form, to_form(Ledger.change_transaction(transaction)))
   end
 
@@ -136,8 +140,15 @@ defmodule AppWeb.TransactionLive.Form do
   end
 
   defp save_transaction(socket, :new, transaction_params) do
-    case Ledger.create_transaction(transaction_params) do
-      {:ok, %{transaction: transaction, updated_account: _account}} ->
+    result =
+      if transaction_params["total_installments"] > 1 do
+        Ledger.create_installment_purchase(transaction_params)
+      else
+        Ledger.create_transaction(transaction_params)
+      end
+
+    case result do
+      {:ok, %{transaction: transaction}} ->
         {:noreply,
          socket
          |> put_flash(:info, "Transaction created successfully")

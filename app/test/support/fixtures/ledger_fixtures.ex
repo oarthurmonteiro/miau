@@ -50,4 +50,19 @@ defmodule App.LedgerFixtures do
 
     transaction
   end
+
+  @doc """
+  Generate a credit_metadata.
+  """
+  def credit_metadata_fixture(attrs \\ %{}) do
+    {:ok, credit_metadata} =
+      attrs
+      |> Enum.into(%{
+        installment_number: 42,
+        total_installments: 42
+      })
+      |> App.Ledger.create_credit_metadata()
+
+    credit_metadata
+  end
 end

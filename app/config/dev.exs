@@ -28,7 +28,11 @@ config :app, AppWeb.Endpoint,
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:app, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:app, ~w(--watch)]}
-  ]
+  ],
+  # ADICIONE ESTA LINHA:
+  reloadable_compilers: [:phoenix, :elixir],
+  # Se o reload não disparar, tente forçar o adapter de monitoramento:
+  file_system_poll: true
 
 # ## SSL Support
 #

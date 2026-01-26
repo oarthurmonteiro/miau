@@ -1,7 +1,7 @@
 defmodule AppWeb.AccountLive.Show do
   use AppWeb, :live_view
 
-  alias App.Ledger
+  alias App.Portfolio
 
   @impl true
   def render(assigns) do
@@ -34,6 +34,6 @@ defmodule AppWeb.AccountLive.Show do
     {:ok,
      socket
      |> assign(:page_title, "Show Account")
-     |> assign(:account, Ledger.get_account!(id))}
+     |> assign(:account, Portfolio.get_account!(id))}
   end
 end

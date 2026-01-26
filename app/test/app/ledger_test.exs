@@ -58,40 +58,40 @@ defmodule App.LedgerTest do
   end
 
   describe "accounts" do
-    alias App.Ledger.Account
+    alias App.Portfolio.Account
 
-    import App.LedgerFixtures
+    import App.PortfolioFixtures
 
     @invalid_attrs %{name: nil, initial_balance: nil, current_balance: nil}
 
     test "list_accounts/0 returns all accounts" do
       account = account_fixture()
-      assert Ledger.list_accounts() == [account]
+      assert Portfolio.list_accounts() == [account]
     end
 
     test "get_account!/1 returns the account with given id" do
       account = account_fixture()
-      assert Ledger.get_account!(account.id) == account
+      assert Portfolio.get_account!(account.id) == account
     end
 
     test "create_account/1 with valid data creates a account" do
       valid_attrs = %{name: "some name", initial_balance: "120.5", current_balance: "120.5"}
 
-      assert {:ok, %Account{} = account} = Ledger.create_account(valid_attrs)
+      assert {:ok, %Account{} = account} = Portfolio.create_account(valid_attrs)
       assert account.name == "some name"
       assert account.initial_balance == Decimal.new("120.5")
       assert account.current_balance == Decimal.new("120.5")
     end
 
     test "create_account/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Ledger.create_account(@invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Portfolio.create_account(@invalid_attrs)
     end
 
     test "update_account/2 with valid data updates the account" do
       account = account_fixture()
       update_attrs = %{name: "some updated name", initial_balance: "456.7", current_balance: "456.7"}
 
-      assert {:ok, %Account{} = account} = Ledger.update_account(account, update_attrs)
+      assert {:ok, %Account{} = account} = Portfolio.update_account(account, update_attrs)
       assert account.name == "some updated name"
       assert account.initial_balance == Decimal.new("456.7")
       assert account.current_balance == Decimal.new("456.7")
@@ -99,19 +99,19 @@ defmodule App.LedgerTest do
 
     test "update_account/2 with invalid data returns error changeset" do
       account = account_fixture()
-      assert {:error, %Ecto.Changeset{}} = Ledger.update_account(account, @invalid_attrs)
-      assert account == Ledger.get_account!(account.id)
+      assert {:error, %Ecto.Changeset{}} = Portfolio.update_account(account, @invalid_attrs)
+      assert account == Portfolio.get_account!(account.id)
     end
 
     test "delete_account/1 deletes the account" do
       account = account_fixture()
-      assert {:ok, %Account{}} = Ledger.delete_account(account)
-      assert_raise Ecto.NoResultsError, fn -> Ledger.get_account!(account.id) end
+      assert {:ok, %Account{}} = Portfolio.delete_account(account)
+      assert_raise Ecto.NoResultsError, fn -> Portfolio.get_account!(account.id) end
     end
 
     test "change_account/1 returns a account changeset" do
       account = account_fixture()
-      assert %Ecto.Changeset{} = Ledger.change_account(account)
+      assert %Ecto.Changeset{} = Portfolio.change_account(account)
     end
   end
 
@@ -172,6 +172,62 @@ defmodule App.LedgerTest do
     test "change_transaction/1 returns a transaction changeset" do
       transaction = transaction_fixture()
       assert %Ecto.Changeset{} = Ledger.change_transaction(transaction)
+    end
+  end
+
+  describe "credit_metadata" do
+    alias App.Ledger.CreditMetadata
+
+    import App.LedgerFixtures
+
+    @invalid_attrs %{total_installments: nil, installment_number: nil}
+
+    test "list_credit_metadata/0 returns all credit_metadata" do
+      credit_metadata = credit_metadata_fixture()
+      assert Ledger.list_credit_metadata() == [credit_metadata]
+    end
+
+    test "get_credit_metadata!/1 returns the credit_metadata with given id" do
+      credit_metadata = credit_metadata_fixture()
+      assert Ledger.get_credit_metadata!(credit_metadata.id) == credit_metadata
+    end
+
+    test "create_credit_metadata/1 with valid data creates a credit_metadata" do
+      valid_attrs = %{total_installments: 42, installment_number: 42}
+
+      assert {:ok, %CreditMetadata{} = credit_metadata} = Ledger.create_credit_metadata(valid_attrs)
+      assert credit_metadata.total_installments == 42
+      assert credit_metadata.installment_number == 42
+    end
+
+    test "create_credit_metadata/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Ledger.create_credit_metadata(@invalid_attrs)
+    end
+
+    test "update_credit_metadata/2 with valid data updates the credit_metadata" do
+      credit_metadata = credit_metadata_fixture()
+      update_attrs = %{total_installments: 43, installment_number: 43}
+
+      assert {:ok, %CreditMetadata{} = credit_metadata} = Ledger.update_credit_metadata(credit_metadata, update_attrs)
+      assert credit_metadata.total_installments == 43
+      assert credit_metadata.installment_number == 43
+    end
+
+    test "update_credit_metadata/2 with invalid data returns error changeset" do
+      credit_metadata = credit_metadata_fixture()
+      assert {:error, %Ecto.Changeset{}} = Ledger.update_credit_metadata(credit_metadata, @invalid_attrs)
+      assert credit_metadata == Ledger.get_credit_metadata!(credit_metadata.id)
+    end
+
+    test "delete_credit_metadata/1 deletes the credit_metadata" do
+      credit_metadata = credit_metadata_fixture()
+      assert {:ok, %CreditMetadata{}} = Ledger.delete_credit_metadata(credit_metadata)
+      assert_raise Ecto.NoResultsError, fn -> Ledger.get_credit_metadata!(credit_metadata.id) end
+    end
+
+    test "change_credit_metadata/1 returns a credit_metadata changeset" do
+      credit_metadata = credit_metadata_fixture()
+      assert %Ecto.Changeset{} = Ledger.change_credit_metadata(credit_metadata)
     end
   end
 end

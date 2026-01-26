@@ -9,7 +9,9 @@ defmodule App.Credit.CreditCard do
     field :due_day, :integer
     field :closing_day_offset, :integer
 
-    belongs_to :account, App.Ledger.Account
+    belongs_to :account, App.Portfolio.Account
+
+    has_many(:invoices, App.Credit.Invoice)
 
     timestamps(type: :utc_datetime_usec)
   end
