@@ -146,8 +146,13 @@ defmodule App.Ledger do
 
   """
   def create_transaction(attrs) do
-    with {:ok, form_data} <- TransactionForm.build(attrs),
-         do: do_create_transaction(form_data)
+    with {:ok, form} <- TransactionForm.build(attrs),
+         {:ok, results} <- do_create_transaction(form) do
+      {:ok, results.main_record}
+    else
+      {:error, _step, changeset, _} -> {:error, changeset}
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
+    end
   end
 
   defp do_create_transaction(%TransactionForm{:type => :income} = _attrs), do: raise("TO DO")
@@ -165,66 +170,49 @@ defmodule App.Ledger do
     |> Multi.run(:plan, fn _repo, _ ->
       {:ok, App.Credit.Installment.build_plan(attrs)}
     end)
-    |> Multi.merge(fn %{plan: plan, account: acc} ->
-      # Handle the first one specifically to get the parent ID
-      [first | rest] = plan.installments
-
-      Multi.new()
-      |> insert_installment_step(first, acc, attrs)
-      |> Multi.merge(fn %{{:tx, 1} => parent_tx} ->
-        # Process the rest using the parent_tx.id
-        Enum.reduce(rest, Multi.new(), fn inst, m ->
-          insert_installment_step(m, inst, acc, attrs, parent_tx.id)
-        end)
-      end)
+    |> Multi.merge(fn %{plan: plan, account: a} ->
+      process_installments(plan.installments, a, attrs)
     end)
-    |> Multi.run(:balance, fn repo, %{account: a} ->
-      new_balance = a.current_balance |> Decimal.add(attrs.amount)
-
-      App.Portfolio.update_account_balance(repo, a, new_balance)
+    |> Multi.run(:balance, &update_final_balance(&1, &2, attrs.amount))
+    |> Multi.run(:main_record, fn _repo, results ->
+      {:ok, results[{:tx, 1}]}
     end)
     |> Repo.transaction()
   end
 
-  defp insert_installment_step(multi, inst, account, attrs, first_tx_id \\ nil) do
+  defp process_installments([first | rest], account, attrs) do
+    Multi.new()
+    |> insert_installment_step(first, account, attrs)
+    |> Multi.merge(fn %{{:tx, 1} => parent} ->
+      Enum.reduce(rest, Multi.new(), fn inst, m ->
+        insert_installment_step(m, inst, account, attrs, parent.id)
+      end)
+    end)
+  end
+
+  defp insert_installment_step(multi, inst, account, attrs, parent_id \\ nil) do
     n = inst.installment_number
 
     multi
-    |> Multi.insert(
-      {:tx, n},
-      Transaction.changeset(
-        %Transaction{},
-        %{
-          description: attrs.description,
-          category_id: attrs.category_id,
-          account_id: attrs.account_id,
-          amount: inst.amount,
-          occurred_at: inst.occurred_at,
-          type: :expense
-        }
-      )
-    )
+    |> Multi.insert({:tx, n}, Transaction.credit_changeset(attrs, inst))
     |> Multi.run({:invoice, n}, fn repo, %{{:tx, ^n} => tx} ->
-      with {:ok, invoice} <-
-             App.Credit.get_or_create_invoice_for_card(
-               repo,
-               account.credit_card,
-               tx.occurred_at
-             ),
-           {:ok, updated_invoice} <-
-             App.Credit.update_invoice_debt_amount(repo, invoice, tx.amount) do
-        {:ok, updated_invoice}
-      end
+      update_invoice_logic(repo, account.credit_card, tx)
     end)
-    |> Multi.insert({:metadata, n}, fn %{{:tx, ^n} => tx, {:invoice, ^n} => invoice} ->
-      CreditMetadata.changeset(%CreditMetadata{}, %{
-        installment_number: inst.installment_number,
-        total_installments: inst.total_installments,
-        transaction_id: tx.id,
-        invoice_id: invoice.id,
-        parent_transaction_id: first_tx_id
-      })
+    |> Multi.insert({:metadata, n}, fn %{{:tx, ^n} => tx, {:invoice, ^n} => inv} ->
+      CreditMetadata.installment_link_changeset(tx.id, inv.id, inst, parent_id)
     end)
+  end
+
+  defp update_invoice_logic(repo, card, tx) do
+    with {:ok, invoice} <- App.Credit.get_or_create_invoice_for_card(repo, card, tx.occurred_at),
+         {:ok, updated} <- App.Credit.update_invoice_debt_amount(repo, invoice, tx.amount) do
+      {:ok, updated}
+    end
+  end
+
+  defp update_final_balance(repo, %{account: a}, amount) do
+    new_balance = Decimal.add(a.current_balance, amount)
+    App.Portfolio.update_account_balance(repo, a, new_balance)
   end
 
   @doc """

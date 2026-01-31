@@ -140,26 +140,14 @@ defmodule AppWeb.TransactionLive.Form do
 
   defp save_transaction(socket, :new, transaction_params) do
     case Ledger.create_transaction(transaction_params) do
-      {:ok, %{transaction: transaction}} ->
+      {:ok, transaction} ->
         {:noreply,
          socket
          |> put_flash(:info, "Transaction created successfully")
          |> push_navigate(to: return_path(socket.assigns.return_to, transaction))}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset, label: ">>> CHANGESET")
+      {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
-
-      {:error, :transaction, %Ecto.Changeset{} = changeset, _} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
-
-      {:error, :account, :account_not_found, _} ->
-        # Erro se a conta sumiu do banco no meio do processo
-        {:noreply, put_flash(socket, :error, "Conta não encontrada")}
-
-      {:error, step, _value, _} ->
-        # Erro genérico em qualquer outro passo
-        {:noreply, put_flash(socket, :error, "Erro no passo #{step}")}
     end
   end
 

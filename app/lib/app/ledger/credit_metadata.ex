@@ -27,4 +27,15 @@ defmodule App.Ledger.CreditMetadata do
     ])
     |> validate_required([:total_installments, :installment_number, :transaction_id, :invoice_id])
   end
+
+  def installment_link_changeset(tx_id, invoice_id, inst, parent_id \\ nil) do
+    %__MODULE__{}
+    |> changeset(%{
+      transaction_id: tx_id,
+      invoice_id: invoice_id,
+      installment_number: inst.installment_number,
+      total_installments: inst.total_installments,
+      parent_transaction_id: parent_id
+    })
+  end
 end

@@ -27,4 +27,16 @@ defmodule App.Ledger.Transaction do
     |> validate_length(:description, max: 255)
     |> validate_required([:description, :amount, :occurred_at, :type, :account_id, :category_id])
   end
+
+  def credit_changeset(form_attrs, installment) do
+    %__MODULE__{}
+    |> changeset(%{
+      description: form_attrs.description,
+      category_id: form_attrs.category_id,
+      account_id: form_attrs.account_id,
+      amount: installment.amount,
+      occurred_at: installment.occurred_at,
+      type: :expense
+    })
+  end
 end
