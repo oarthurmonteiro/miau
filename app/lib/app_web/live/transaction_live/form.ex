@@ -22,7 +22,7 @@ defmodule AppWeb.TransactionLive.Form do
           type="select"
           label="Type"
           prompt="Choose a value"
-          options={Ecto.Enum.values(App.Ledger.Transaction, :type)}
+          options={Ecto.Enum.values(App.Ledger.TransactionForm, :type)}
         />
         <.input
           field={@form[:category_id]}
@@ -145,6 +145,10 @@ defmodule AppWeb.TransactionLive.Form do
          socket
          |> put_flash(:info, "Transaction created successfully")
          |> push_navigate(to: return_path(socket.assigns.return_to, transaction))}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        IO.inspect(changeset, label: ">>> CHANGESET")
+        {:noreply, assign(socket, form: to_form(changeset))}
 
       {:error, :transaction, %Ecto.Changeset{} = changeset, _} ->
         {:noreply, assign(socket, form: to_form(changeset))}

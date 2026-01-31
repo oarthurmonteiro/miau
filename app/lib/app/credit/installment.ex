@@ -16,7 +16,7 @@ defmodule App.Credit.Installment do
           total_installments: total,
           amount: amount_per,
           occurred_at: Date.shift(date, month: i - 1),
-          description: "#{description} (#{installment_number}/#{total})"
+          description: "#{description} (#{i}/#{total})"
         }
       end
 

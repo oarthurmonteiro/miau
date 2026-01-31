@@ -103,6 +103,7 @@ defmodule App.Ledger do
   end
 
   alias App.Ledger.Transaction
+  alias App.Ledger.TransactionForm
   alias App.Ledger.CreditMetadata
   alias Ecto.Multi
 
@@ -145,38 +146,19 @@ defmodule App.Ledger do
 
   """
   def create_transaction(attrs) do
-    input = normalize_transaction_input(attrs)
-
-    if input.total_installments > 1 do
-      create_installment_transaction(input)
-    else
-      create_single_transaction(input)
-    end
+    with {:ok, form_data} <- TransactionForm.build(attrs),
+         do: do_create_transaction(form_data)
   end
 
-  def normalize_transaction_input(attrs) do
-    %{
-      account_id: attrs["account_id"],
-      amount: Decimal.new(attrs["amount"]),
-      occurred_at: Date.from_iso8601!(attrs["occurred_at"]),
-      type: String.to_existing_atom(attrs["type"]),
-      category_id: attrs["category_id"],
-      description: attrs["description"],
-      total_installments:
-        attrs["total_installments"]
-        |> then(&(&1 || "1"))
-        |> String.to_integer()
-    }
-  end
+  defp do_create_transaction(%TransactionForm{:type => :income} = _attrs), do: raise("TO DO")
 
-  defp create_single_transaction(_attrs) do
-    raise "TODO"
-  end
+  defp do_create_transaction(%TransactionForm{:type => :expense_debit} = _attrs),
+    do: raise("TO DO")
 
-  defp create_installment_transaction(attrs) do
+  defp do_create_transaction(%TransactionForm{:type => :expense_credit} = attrs) do
     Multi.new()
     |> Multi.run(:account, fn repo, _ ->
-      App.Portfolio.fetch_account_with_credit(repo, attrs[:account_id])
+      App.Portfolio.fetch_account_with_credit(repo, attrs.account_id)
     end)
     |> Multi.run(:plan, fn _repo, _ ->
       {:ok, App.Credit.Installment.build_plan(attrs)}
@@ -185,12 +167,14 @@ defmodule App.Ledger do
       insert_installments_multi(plan, a, attrs)
     end)
     |> Multi.run(:balance, fn repo, %{account: a} ->
-      new_balance = a.current_balance |> Decimal.add(attrs[:amount])
+      new_balance = a.current_balance |> Decimal.add(attrs.amount)
 
       App.Portfolio.update_account_balance(repo, a, new_balance)
     end)
     |> Repo.transaction()
   end
+
+  defp do_create_transaction(%TransactionForm{:type => :transfer} = _attrs), do: raise("TO DO")
 
   defp insert_installments_multi(plan, account, attrs) do
     Enum.reduce(plan.installments, Multi.new(), fn inst, multi ->
@@ -202,13 +186,14 @@ defmodule App.Ledger do
       |> Multi.insert(tx_key, fn _ ->
         Transaction.changeset(
           %Transaction{},
-          attrs
-          |> Map.merge(%{
+          %{
+            description: attrs.description,
+            category_id: attrs.category_id,
+            account_id: attrs.account_id,
             amount: inst.amount,
             occurred_at: inst.occurred_at,
-            type: :expense,
-
-          })
+            type: :expense
+          }
         )
       end)
       |> Multi.run(invoice_key, fn repo, results ->
@@ -237,11 +222,10 @@ defmodule App.Ledger do
           transaction_id: tx.id,
           invoice_id: invoice.id,
           parent_transaction_id:
-            if inst.installment_number == 1 do
-              nil
-            else
-              results[{:tx, 1}].id
-            end
+            if(inst.installment_number == 1,
+              do: nil,
+              else: results[{:tx, 1}].id
+            )
         })
         |> repo.insert()
       end)
