@@ -155,6 +155,8 @@ defmodule App.Ledger do
   defp do_create_transaction(%TransactionForm{:type => :expense_debit} = _attrs),
     do: raise("TO DO")
 
+  defp do_create_transaction(%TransactionForm{:type => :transfer} = _attrs), do: raise("TO DO")
+
   defp do_create_transaction(%TransactionForm{:type => :expense_credit} = attrs) do
     Multi.new()
     |> Multi.run(:account, fn repo, _ ->
@@ -163,8 +165,18 @@ defmodule App.Ledger do
     |> Multi.run(:plan, fn _repo, _ ->
       {:ok, App.Credit.Installment.build_plan(attrs)}
     end)
-    |> Multi.merge(fn %{plan: plan, account: a} ->
-      insert_installments_multi(plan, a, attrs)
+    |> Multi.merge(fn %{plan: plan, account: acc} ->
+      # Handle the first one specifically to get the parent ID
+      [first | rest] = plan.installments
+
+      Multi.new()
+      |> insert_installment_step(first, acc, attrs)
+      |> Multi.merge(fn %{{:tx, 1} => parent_tx} ->
+        # Process the rest using the parent_tx.id
+        Enum.reduce(rest, Multi.new(), fn inst, m ->
+          insert_installment_step(m, inst, acc, attrs, parent_tx.id)
+        end)
+      end)
     end)
     |> Multi.run(:balance, fn repo, %{account: a} ->
       new_balance = a.current_balance |> Decimal.add(attrs.amount)
@@ -174,61 +186,44 @@ defmodule App.Ledger do
     |> Repo.transaction()
   end
 
-  defp do_create_transaction(%TransactionForm{:type => :transfer} = _attrs), do: raise("TO DO")
+  defp insert_installment_step(multi, inst, account, attrs, first_tx_id \\ nil) do
+    n = inst.installment_number
 
-  defp insert_installments_multi(plan, account, attrs) do
-    Enum.reduce(plan.installments, Multi.new(), fn inst, multi ->
-      tx_key = {:tx, inst.installment_number}
-      invoice_key = {:invoice, inst.installment_number}
-      meta_key = {:metadata, inst.installment_number}
-
-      multi
-      |> Multi.insert(tx_key, fn _ ->
-        Transaction.changeset(
-          %Transaction{},
-          %{
-            description: attrs.description,
-            category_id: attrs.category_id,
-            account_id: attrs.account_id,
-            amount: inst.amount,
-            occurred_at: inst.occurred_at,
-            type: :expense
-          }
-        )
-      end)
-      |> Multi.run(invoice_key, fn repo, results ->
-        tx = results[tx_key]
-
-        with {:ok, invoice} <-
-               App.Credit.get_or_create_invoice_for_card(
-                 repo,
-                 account.credit_card,
-                 tx.occurred_at
-               ),
-             {:ok, updated_invoice} <-
-               App.Credit.update_invoice_debt_amount(repo, invoice, tx.amount) do
-          {:ok, updated_invoice}
-        else
-          {:error, reason} -> {:error, reason}
-        end
-      end)
-      |> Multi.run(meta_key, fn repo, results ->
-        tx = results[tx_key]
-        invoice = results[invoice_key]
-
-        CreditMetadata.changeset(%CreditMetadata{}, %{
-          installment_number: inst.installment_number,
-          total_installments: inst.total_installments,
-          transaction_id: tx.id,
-          invoice_id: invoice.id,
-          parent_transaction_id:
-            if(inst.installment_number == 1,
-              do: nil,
-              else: results[{:tx, 1}].id
-            )
-        })
-        |> repo.insert()
-      end)
+    multi
+    |> Multi.insert(
+      {:tx, n},
+      Transaction.changeset(
+        %Transaction{},
+        %{
+          description: attrs.description,
+          category_id: attrs.category_id,
+          account_id: attrs.account_id,
+          amount: inst.amount,
+          occurred_at: inst.occurred_at,
+          type: :expense
+        }
+      )
+    )
+    |> Multi.run({:invoice, n}, fn repo, %{{:tx, ^n} => tx} ->
+      with {:ok, invoice} <-
+             App.Credit.get_or_create_invoice_for_card(
+               repo,
+               account.credit_card,
+               tx.occurred_at
+             ),
+           {:ok, updated_invoice} <-
+             App.Credit.update_invoice_debt_amount(repo, invoice, tx.amount) do
+        {:ok, updated_invoice}
+      end
+    end)
+    |> Multi.insert({:metadata, n}, fn %{{:tx, ^n} => tx, {:invoice, ^n} => invoice} ->
+      CreditMetadata.changeset(%CreditMetadata{}, %{
+        installment_number: inst.installment_number,
+        total_installments: inst.total_installments,
+        transaction_id: tx.id,
+        invoice_id: invoice.id,
+        parent_transaction_id: first_tx_id
+      })
     end)
   end
 
