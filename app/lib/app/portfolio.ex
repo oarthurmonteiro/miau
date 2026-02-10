@@ -35,9 +35,15 @@ defmodule App.Portfolio do
   def get_account!(id), do: Repo.get!(Account, id)
 
   def fetch_account_with_credit(repo, id) do
+    with {:ok, account} <- fetch_account(repo, id) do
+      {:ok, account |> repo.preload(:credit_card)}
+    end
+  end
+
+  def fetch_account(repo, id) do
     case repo.get(Account, id) do
       nil -> {:error, :account_not_found}
-      account -> {:ok, account |> repo.preload(:credit_card)}
+      account -> {:ok, account}
     end
   end
 

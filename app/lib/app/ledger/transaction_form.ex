@@ -6,6 +6,7 @@ defmodule App.Ledger.TransactionForm do
   embedded_schema do
     # Common fields
     field(:type, Ecto.Enum, values: [:income, :expense_debit, :expense_credit, :transfer])
+    field(:status, Ecto.Enum, values: [:active, :scheduled])
     field(:occurred_at, :date)
     field(:amount, :decimal)
     field(:description, :string)
@@ -33,6 +34,7 @@ defmodule App.Ledger.TransactionForm do
   def changeset(struct, params) do
     struct
     |> cast(params, [
+      :status,
       :type,
       :description,
       :occurred_at,
@@ -66,13 +68,13 @@ defmodule App.Ledger.TransactionForm do
 
   defp validate_income(changeset) do
     changeset
-    |> validate_required([:account_id, :description])
+    |> validate_required([:status, :account_id, :description])
     |> validate_length(:description, max: 255)
   end
 
   defp validate_expense_debit(changeset) do
     changeset
-    |> validate_required([:account_id, :description])
+    |> validate_required([:status, :account_id, :description])
     |> validate_length(:description, max: 255)
   end
 

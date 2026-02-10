@@ -9,6 +9,7 @@ defmodule App.Ledger.Transaction do
     field(:amount, :decimal)
     field(:occurred_at, :date)
     field(:type, Ecto.Enum, values: [:income, :expense, :transfer, :refund])
+    field(:status, Ecto.Enum, values: [:active, :scheduled, :refunded])
 
     belongs_to(:account, App.Portfolio.Account)
     belongs_to(:category, App.Ledger.Category)
@@ -23,9 +24,9 @@ defmodule App.Ledger.Transaction do
   @doc false
   def changeset(transaction, attrs) do
     transaction
-    |> cast(attrs, [:description, :amount, :occurred_at, :type, :account_id, :category_id])
+    |> cast(attrs, [:status, :description, :amount, :occurred_at, :type, :account_id, :category_id])
     |> validate_length(:description, max: 255)
-    |> validate_required([:description, :amount, :occurred_at, :type, :account_id, :category_id])
+    |> validate_required([:status, :description, :amount, :occurred_at, :type, :account_id, :category_id])
   end
 
   def credit_changeset(form_attrs, installment) do
@@ -36,7 +37,11 @@ defmodule App.Ledger.Transaction do
       account_id: form_attrs.account_id,
       amount: installment.amount,
       occurred_at: installment.occurred_at,
+      status: credit_status(installment),
       type: :expense
     })
   end
+
+  defp credit_status(%{installment_number: 1}), do: :active
+  defp credit_status(_), do: :scheduled
 end

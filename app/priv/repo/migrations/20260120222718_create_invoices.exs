@@ -3,8 +3,8 @@ defmodule App.Repo.Migrations.CreateInvoices do
 
   def change do
 
-     execute "CREATE TYPE invoices_status AS ENUM ('open', 'closed', 'partially_paid', 'paid')",
-          "DROP TYPE invoices_status"
+    execute "CREATE TYPE invoices_status AS ENUM ('open', 'future', 'closed', 'partially_paid', 'paid')",
+        "DROP TYPE invoices_status"
 
     create table(:invoices) do
 

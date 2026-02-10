@@ -148,42 +148,75 @@ defmodule App.Ledger do
   def create_transaction(attrs) do
     with {:ok, form} <- TransactionForm.build(attrs),
          {:ok, results} <- do_create_transaction(form) do
-      {:ok, results.main_record}
+      {:ok, results.primary_transaction}
     else
       {:error, _step, changeset, _} -> {:error, changeset}
       {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
     end
   end
 
-  defp do_create_transaction(%TransactionForm{:type => :income} = _attrs), do: raise("TO DO")
+  defp do_create_transaction(%TransactionForm{type: t} = attrs)
+       when t in [:income, :expense_debit],
+       do: simple_transaction(attrs)
 
-  defp do_create_transaction(%TransactionForm{:type => :expense_debit} = _attrs),
-    do: raise("TO DO")
+  defp do_create_transaction(%TransactionForm{type: :transfer} = _attrs), do: raise("TO DO")
 
-  defp do_create_transaction(%TransactionForm{:type => :transfer} = _attrs), do: raise("TO DO")
-
-  defp do_create_transaction(%TransactionForm{:type => :expense_credit} = attrs) do
+  defp do_create_transaction(%TransactionForm{type: :expense_credit} = attrs) do
     Multi.new()
-    |> Multi.run(:account, fn repo, _ ->
+    |> Multi.run(:load_account, fn repo, _ ->
       App.Portfolio.fetch_account_with_credit(repo, attrs.account_id)
     end)
-    |> Multi.run(:plan, fn _repo, _ ->
+    |> Multi.run(:build_installment_plan, fn _repo, _ ->
       {:ok, App.Credit.Installment.build_plan(attrs)}
     end)
-    |> Multi.merge(fn %{plan: plan, account: a} ->
+    |> Multi.merge(fn %{build_installment_plan: plan, load_account: a} ->
       process_installments(plan.installments, a, attrs)
     end)
-    |> Multi.run(:balance, &update_final_balance(&1, &2, attrs.amount))
-    |> Multi.run(:main_record, fn _repo, results ->
+    |> Multi.run(:recalculate_account_balance, &update_final_balance(&1, &2, attrs))
+    |> Multi.run(:primary_transaction, fn _repo, results ->
       {:ok, results[{:tx, 1}]}
     end)
+    |> Repo.transaction()
+  end
+
+  defp balance_effect(:income), do: :credit
+  defp balance_effect(:expense_debit), do: :debit
+  defp balance_effect(:expense_credit), do: :credit
+
+  defp signed_amount(:credit, amount), do: amount
+  defp signed_amount(:debit, amount), do: Decimal.negate(amount)
+
+  defp simple_transaction(attrs) do
+    tx_type =
+      case attrs.type do
+        :income -> :income
+        :expense_debit -> :expense
+      end
+
+    Multi.new()
+    |> Multi.run(:load_account, fn repo, _ ->
+      App.Portfolio.fetch_account(repo, attrs.account_id)
+    end)
+    |> Multi.run(:recalculate_account_balance, &update_final_balance(&1, &2, attrs))
+    |> Multi.insert(
+      :primary_transaction,
+      Transaction.changeset(%Transaction{}, %{
+        type: tx_type,
+        status: attrs.status,
+        description: attrs.description,
+        amount: attrs.amount,
+        occurred_at: attrs.occurred_at,
+        account_id: attrs.account_id,
+        category_id: attrs.category_id
+      })
+    )
     |> Repo.transaction()
   end
 
   defp process_installments([first | rest], account, attrs) do
     Multi.new()
     |> insert_installment_step(first, account, attrs)
-    |> Multi.merge(fn %{{:tx, 1} => parent} ->
+    |> Multi.merge(fn %{{:installment_transaction, 1} => parent} ->
       Enum.reduce(rest, Multi.new(), fn inst, m ->
         insert_installment_step(m, inst, account, attrs, parent.id)
       end)
@@ -193,12 +226,17 @@ defmodule App.Ledger do
   defp insert_installment_step(multi, inst, account, attrs, parent_id \\ nil) do
     n = inst.installment_number
 
+    IO.inspect(Transaction.credit_changeset(attrs, inst))
+
     multi
-    |> Multi.insert({:tx, n}, Transaction.credit_changeset(attrs, inst))
-    |> Multi.run({:invoice, n}, fn repo, %{{:tx, ^n} => tx} ->
+    |> Multi.insert({:installment_transaction, n}, Transaction.credit_changeset(attrs, inst))
+    |> Multi.run({:assign_invoice, n}, fn repo, %{{:installment_transaction, ^n} => tx} ->
       update_invoice_logic(repo, account.credit_card, tx)
     end)
-    |> Multi.insert({:metadata, n}, fn %{{:tx, ^n} => tx, {:invoice, ^n} => inv} ->
+    |> Multi.insert({:link_installment_metadata, n}, fn %{
+                                                          {:installment_transaction, ^n} => tx,
+                                                          {:assign_invoice, ^n} => inv
+                                                        } ->
       CreditMetadata.installment_link_changeset(tx.id, inv.id, inst, parent_id)
     end)
   end
@@ -210,8 +248,9 @@ defmodule App.Ledger do
     end
   end
 
-  defp update_final_balance(repo, %{account: a}, amount) do
-    new_balance = Decimal.add(a.current_balance, amount)
+  defp update_final_balance(repo, %{load_account: a}, form) do
+    effect = balance_effect(form.type)
+    new_balance = Decimal.add(a.current_balance, signed_amount(effect, form.amount))
     App.Portfolio.update_account_balance(repo, a, new_balance)
   end
 

@@ -70,7 +70,7 @@ defmodule App.Credit do
 
   defp create_initial_invoice(multi) do
     Multi.insert(multi, :invoice, fn %{card: card} ->
-      Invoice.changeset(%Invoice{}, generate_invoice_data(card))
+      Invoice.changeset(%Invoice{}, generate_invoice_data(card) |> Map.merge(%{status: :open}))
     end)
   end
 
@@ -83,44 +83,6 @@ defmodule App.Credit do
     })
   end
 
-  def generate_invoice_data(card, reference_date \\ Date.utc_today()) do
-    reference_date
-    |> due_date_for(card)
-    |> Cycle.from_due_date(card.closing_day_offset)
-    |> maybe_shift_cycle(reference_date, card)
-    |> Map.merge(%{
-      credit_card_id: card.id,
-      status: :open,
-      total_amount: 0,
-      amount_paid: 0,
-      remaining_balance: 0
-    })
-  end
-
-  defp due_date_for(reference_date, card) do
-    Date.new!(reference_date.year, reference_date.month, card.due_day)
-  end
-
-  defp maybe_shift_cycle(dates, reference_date, card) do
-    if after_closing?(reference_date, dates) do
-      next_cycle(reference_date, card)
-    else
-      dates
-    end
-  end
-
-  defp after_closing?(reference_date, %{end_date: end_date}) do
-    Date.after?(reference_date, end_date)
-  end
-
-  defp next_cycle(reference_date, card) do
-    reference_date
-    |> Date.shift(month: 1)
-    |> Date.beginning_of_month()
-    |> Date.add(card.due_day - 1)
-    |> Cycle.from_due_date(card.closing_day_offset)
-  end
-
   def update_invoice_debt_amount(repo, invoice, amount) do
     new_total = Decimal.add(invoice.total_amount || 0, amount)
 
@@ -129,16 +91,45 @@ defmodule App.Credit do
     |> repo.update()
   end
 
+  def generate_invoice_data(card, reference_date \\ Date.utc_today()) do
+    reference_date
+    |> Cycle.build_for_reference_date(card.due_day, card.closing_day_offset)
+    |> Cycle.to_invoice_period()
+    |> Map.merge(%{
+      credit_card_id: card.id,
+      total_amount: 0,
+      amount_paid: 0,
+      remaining_balance: 0
+    })
+  end
+
   def get_or_create_invoice_for_card(repo, credit_card, reference_date) do
     case get_invoice_for_card_by_date(repo, credit_card.id, reference_date) do
       nil ->
+        status =
+          if open_invoice_exists?(repo, credit_card.id),
+            do: :future,
+            else: :open
+
         %Invoice{}
-        |> Invoice.changeset(generate_invoice_data(credit_card, reference_date))
+        |> Invoice.changeset(
+          generate_invoice_data(credit_card, reference_date)
+          |> Map.merge(%{status: status})
+        )
         |> repo.insert()
 
       invoice ->
         {:ok, invoice}
     end
+  end
+
+  defp open_invoice_exists?(repo, credit_card_id) do
+    from(i in Invoice,
+      where: i.credit_card_id == ^credit_card_id and i.status == :open,
+      select: 1,
+      limit: 1
+    )
+    |> repo.exists?()
   end
 
   def get_invoice_for_card_by_date(repo, credit_card_id, date) do

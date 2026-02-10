@@ -25,6 +25,13 @@ defmodule AppWeb.TransactionLive.Form do
           options={Ecto.Enum.values(App.Ledger.TransactionForm, :type)}
         />
         <.input
+          field={@form[:status]}
+          type="select"
+          label="Status"
+          prompt="Choose a value"
+          options={Ecto.Enum.values(App.Ledger.TransactionForm, :status)}
+        />
+        <.input
           field={@form[:category_id]}
           type="select"
           label="Category"

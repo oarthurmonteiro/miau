@@ -13,7 +13,7 @@ defmodule App.Credit.Invoice do
     field(:amount_paid, :decimal)
     field(:remaining_balance, :decimal)
 
-    field(:status, Ecto.Enum, values: [:open, :closed, :partially_paid, :paid])
+    field(:status, Ecto.Enum, values: [:open, :future, :closed, :partially_paid, :paid])
 
     belongs_to(:credit_card, App.Credit.CreditCard)
 
