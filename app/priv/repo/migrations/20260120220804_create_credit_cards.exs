@@ -10,5 +10,7 @@ defmodule App.Repo.Migrations.CreateCreditCards do
 
       timestamps(type: :utc_datetime_usec)
     end
+
+    create unique_index(:credit_cards, [:account_id])
   end
 end
