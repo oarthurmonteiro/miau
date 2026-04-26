@@ -4,23 +4,21 @@ defmodule App.CreditFixtures do
   entities via the `App.Credit` context.
   """
 
-  import App.PortfolioFixtures
-
   @doc """
   Generate a credit_card.
   """
   def credit_card_fixture(attrs \\ %{}) do
-    {:ok, credit_card} =
+    {:ok, %{card: credit_card, account: account}} =
       attrs
       |> Enum.into(%{
         due_day: 10,
         limit: Decimal.new("5000.00"),
         closing_day_offset: 7,
-        name: "some name",
+        name: "some name"
       })
       |> App.Credit.create_credit_card()
 
-    credit_card
+    credit_card |> Map.put(:account, account)
   end
 
   def invoice_fixture(attrs \\ %{}) do

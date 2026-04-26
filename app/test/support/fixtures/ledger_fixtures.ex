@@ -4,6 +4,8 @@ defmodule App.LedgerFixtures do
   entities via the `App.Ledger` context.
   """
 
+  import App.PortfolioFixtures
+
   @doc """
   Generate a category.
   """
@@ -19,32 +21,22 @@ defmodule App.LedgerFixtures do
   end
 
   @doc """
-  Generate a account.
-  """
-  def account_fixture(attrs \\ %{}) do
-    {:ok, account} =
-      attrs
-      |> Enum.into(%{
-        current_balance: "120.5",
-        initial_balance: "120.5",
-        name: "some name"
-      })
-      |> App.Ledger.create_account()
-
-    account
-  end
-
-  @doc """
   Generate a transaction.
   """
   def transaction_fixture(attrs \\ %{}) do
+    account_id = attrs[:account_id] || account_fixture().id
+    category_id = attrs[:category_id] || category_fixture().id
+
     {:ok, transaction} =
       attrs
       |> Enum.into(%{
         amount: "120.5",
         description: "some description",
         occurred_at: ~D[2026-01-20],
-        type: :income
+        type: :income,
+        status: :active,
+        category_id: category_id,
+        account_id: account_id
       })
       |> App.Ledger.create_transaction()
 

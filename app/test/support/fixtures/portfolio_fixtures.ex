@@ -7,7 +7,7 @@ defmodule App.PortfolioFixtures do
     {:ok, account} =
       attrs
       |> Enum.into(%{
-        name: "Main Savings",
+        name: "Account #{System.unique_integer()}",
         type: :debit,
         initial_balance: Decimal.new("1000"),
         current_balance: Decimal.new("1000")

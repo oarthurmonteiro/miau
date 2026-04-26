@@ -15,7 +15,7 @@ defmodule AppWeb.AccountLive.Form do
 
       <.form for={@form} id="account-form" phx-change="validate" phx-submit="save">
         <.input field={@form[:name]} type="text" label="Name" />
-        <%!-- Bloquear a edição desse campo --%>
+        <%!-- @todo Bloquear a edição desse campo --%>
         <.input field={@form[:initial_balance]} type="number" label="Initial balance" step="any" />
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Account</.button>

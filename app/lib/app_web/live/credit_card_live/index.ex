@@ -21,7 +21,7 @@ defmodule AppWeb.CreditCardLive.Index do
         rows={@streams.credit_cards}
         row_click={fn {_id, credit_card} -> JS.navigate(~p"/credit_cards/#{credit_card}") end}
       >
-        <:col :let={{_id, credit_card}} label="Name">{App.Portfolio.get_account!(credit_card.account_id).name}</:col>
+        <:col :let={{_id, credit_card}} label="Name">{credit_card.account.name}</:col>
         <:col :let={{_id, credit_card}} label="Limit">{credit_card.limit}</:col>
         <:col :let={{_id, credit_card}} label="Due day">{credit_card.due_day}</:col>
         <:action :let={{_id, credit_card}}>

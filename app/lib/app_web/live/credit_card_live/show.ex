@@ -21,7 +21,7 @@ defmodule AppWeb.CreditCardLive.Show do
       </.header>
 
       <.list>
-        <:item title="Name">{@credit_card.name}</:item>
+        <:item title="Name">{@credit_card.account.name}</:item>
         <:item title="Limit">{@credit_card.limit}</:item>
         <:item title="Due day">{@credit_card.due_day}</:item>
       </.list>

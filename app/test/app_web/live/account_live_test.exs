@@ -1,8 +1,8 @@
-defmodule AppWeb.Ledger.AccountLiveTest do
+defmodule AppWeb.AccountLiveTest do
   use AppWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import App.LedgerFixtures
+  import App.PortfolioFixtures
 
   @create_attrs %{name: "some name", initial_balance: "120.5"}
   @update_attrs %{name: "some updated name", initial_balance: "456.7"}

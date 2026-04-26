@@ -1,4 +1,4 @@
-defmodule AppWeb.Ledger.CategoryLiveTest do
+defmodule AppWeb.CategoryLiveTest do
   use AppWeb.ConnCase
 
   import Phoenix.LiveViewTest

@@ -46,20 +46,20 @@ defmodule AppWeb.TransactionLive.Form do
         />
 
         <%!-- CAMPO CONDICIONAL --%>
-      <%= if @is_credit do %>
-      <div class="grid grid-cols-2 gap-4">
-        <.input
-          field={@form[:total_installments]}
-          label="Nº de Parcelas"
-          type="number"
-          min="1"
-          value="1"
-        />
-        <p class="text-xs text-gray-500 mt-8">
-          A transação será dividida nas próximas faturas.
-        </p>
-      </div>
-      <% end %>
+        <%= if @is_credit do %>
+          <div class="grid grid-cols-2 gap-4">
+            <.input
+              field={@form[:total_installments]}
+              label="Nº de Parcelas"
+              type="number"
+              min="1"
+              value="1"
+            />
+            <p class="text-xs text-gray-500 mt-8">
+              A transação será dividida nas próximas faturas.
+            </p>
+          </div>
+        <% end %>
 
         <footer>
           <.button phx-disable-with="Saving..." variant="primary">Save Transaction</.button>
@@ -125,7 +125,13 @@ defmodule AppWeb.TransactionLive.Form do
       |> App.Ledger.change_transaction(transaction_params)
       |> Map.put(:action, :validate)
 
-    {:noreply, assign(socket, changeset: changeset, is_credit: is_credit?)}
+    # {:noreply, assign(socket, changeset: changeset, is_credit: is_credit?)}
+    {:noreply,
+     assign(socket,
+       form: to_form(changeset, action: :validate),
+       changeset: changeset,
+       is_credit: is_credit?
+     )}
   end
 
   def handle_event("save", %{"transaction" => transaction_params}, socket) do

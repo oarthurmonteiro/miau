@@ -20,7 +20,7 @@ defmodule App.Credit do
 
   """
   def list_credit_cards do
-    Repo.all(CreditCard)
+    Repo.all(CreditCard) |> Repo.preload(:account)
   end
 
   @doc """
@@ -34,7 +34,7 @@ defmodule App.Credit do
       %CreditCard{}
 
   """
-  def get_credit_card!(id), do: Repo.get!(CreditCard, id)
+  def get_credit_card!(id), do: Repo.get!(CreditCard, id) |> Repo.preload(:account)
 
   @doc """
   Creates a credit_card.
