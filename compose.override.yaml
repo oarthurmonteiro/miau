@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: dev
+    tty: true
+    stdin_open: true
+    develop:
+      watch:
+        - action: sync
+          x-initialSync: true
+          path: ./app
+          target: /app
+          ignore:
+            - /priv/assets/node_modules
+            - .git
+
+        - action: sync+restart
+          path: ./app/lib/app
+          target: /app/lib/app
+          
+        - action: rebuild
+          path: ./app/mix.exs
+
+        - action: rebuild
+          path: ./app/Dockerfile
+    ports:
+      - 4000:4000
+    networks:
+      - traefik
+      - default
+    environment:
+      PHX_HOST: miau.localhost.direct
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.miau-client.rule=Host(`miau.localhost.direct`)"
+
+  db:
+    ports:
+      - 5432
+
+networks:
+  traefik: 
+    external: true
